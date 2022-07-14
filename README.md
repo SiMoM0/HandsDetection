@@ -2,6 +2,14 @@
 
 Project for the course Computer Vision, UniPD 2022.
 
+### Usage
+
+#### Model
+
+* Download the Hand Dataset ([link](https://www.robots.ox.ac.uk/~vgg/data/hands/)) and upload it on your Google Drive, in the main folder *MyDrive*.
+
+* Open the Jupyter Notebook [handdetection.ipynb](https://github.com/SiMoM0/HandsDetection/blob/master/Model/handdetection.ipynb) on Google Colaboratory and connect your drive in order to run the code properly
+
 #### References
 
 Code:
