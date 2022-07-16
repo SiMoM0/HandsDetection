@@ -1,0 +1,9 @@
+#Yaml file for YOLOv5
+path: ../data
+train: train_set/images
+val: val_set/images
+test: #to add
+
+#Classes
+nc: 1 #number of classes
+names: ['hand'] #class names
