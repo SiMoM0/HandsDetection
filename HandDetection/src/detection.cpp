@@ -1,6 +1,7 @@
 //Implementation of the header "detection.hpp"
 #include <iostream>
 #include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
 #include <opencv2/dnn.hpp>
 #include "../include/utils.hpp"
 
@@ -66,5 +67,32 @@ std::vector<cv::Rect> get_boxes(const cv::Mat& img, const std::vector<cv::Mat>& 
     //TODO: delete
     printf("Max confidence: %f\n", max);
 
-    return bbox;
+    //apply non maximum suppresion to get only one bounding box
+    std::vector<int> indices;
+    cv::dnn::NMSBoxes(bbox, confidences, SCORE_THRESHOLD, NMS_THRESHOLD, indices);
+    //keep only the best bbox
+    std::vector<cv::Rect> best_bbox;
+    for(int i=0; i<indices.size(); ++i) {
+        best_bbox.push_back(bbox[indices[i]]);
+    }
+
+    printf("Number of final bounding box: %d\n", best_bbox.size());
+
+    return best_bbox;
+}
+
+void draw_boxes(cv::Mat& img, const std::vector<cv::Rect>& boxes) {
+    //number of bounding box
+    int box_num = boxes.size();
+    for(int i=0; i<box_num; ++i) {
+        //Extract and compute the attributes
+        int x = boxes[i].x;
+        int y = boxes[i].y;
+        int width = boxes[i].width;
+        int height = boxes[i].height;
+        //Create the two points for the rectangle
+		cv::Point p1 (x, y);
+		cv::Point p2 (x + width, y + height);
+		cv::rectangle(img, p1, p2, GREEN, 3);
+	}
 }

@@ -27,6 +27,6 @@ std::vector<cv::Rect> get_boxes(const cv::Mat& img, const std::vector<cv::Mat>& 
  * @param img input image
  * @param boxes vector of bounding box (cv::Rect) to be drawn on the image
  */
-void draw_boxes(const cv::Mat& img, const std::vector<cv::Rect>& boxes);
+void draw_boxes(cv::Mat& img, const std::vector<cv::Rect>& boxes);
 
 #endif //DETECTION
