@@ -8,9 +8,15 @@ Project for the course Computer Vision, UniPD 2022.
 
 * Download the Hand Dataset ([link](https://www.robots.ox.ac.uk/~vgg/data/hands/)) and upload it on your Google Drive, in the main folder *MyDrive*.
 
-* Open the Jupyter Notebook [handdetection.ipynb](https://github.com/SiMoM0/HandsDetection/blob/master/Model/handdetection.ipynb) on Google Colaboratory and connect your drive in order to run the code properly
+* Upload also the [data.yaml](https://github.com/SiMoM0/HandsDetection/blob/master/Model/data.yaml) file in Google Drive as done before. It will be useful for YOLOv5 configuration.
+
+* Open the Jupyter Notebook [handdetection.ipynb](https://github.com/SiMoM0/HandsDetection/blob/master/Model/handdetection.ipynb) on Google Colaboratory and connect your drive in order to run the code properly.
+
+* At the end of the notebook, run the cell to download the model in *.onnx* format as [best.onnx](https://github.com/SiMoM0/HandsDetection/blob/master/Model/best.onnx) and place it in the directory **Model/**. It will be used for the C++ code.
 
 #### References
+
+[YOLOv5](https://github.com/ultralytics/yolov5): object detection architecture and pretrained models use in this project for fine-tuning
 
 Code:
 * Python Hand Detection/Segmentation: https://github.com/BlueDi/Hand-Detection
