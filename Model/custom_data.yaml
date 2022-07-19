@@ -1,7 +1,7 @@
 #Yaml file for YOLOv5
 path: ../data
-train: train_set/images
-val: val_set/images
+train: train/images
+val: valid/images
 test: #to add
 
 #Classes

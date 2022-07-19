@@ -12,11 +12,11 @@ const float HEIGHT = 640.0;
 const int DIMENSION = 25200;
 
 //Confidence threshold for the detection
-const float CONFIDENCE_THRESHOLD = 0.1;
+const float CONFIDENCE_THRESHOLD = 0.4;
 //Score threshold for the detection of a hand
-const float SCORE_THRESHOLD = 0.2;
+const float SCORE_THRESHOLD = 0.4;
 //Non maximum suppresion threshold for bounding box
-const float NMS_THRESHOLD = 0.1;
+const float NMS_THRESHOLD = 0.4;
 
 //Colors
 const cv::Scalar BLACK (0, 0, 0);

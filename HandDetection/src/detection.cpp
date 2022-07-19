@@ -90,6 +90,7 @@ void draw_boxes(cv::Mat& img, const std::vector<cv::Rect>& boxes) {
         int y = boxes[i].y;
         int width = boxes[i].width;
         int height = boxes[i].height;
+        printf("LABEL: %d %d %d %d\n", x, y, width, height);
         //Create the two points for the rectangle
 		cv::Point p1 (x, y);
 		cv::Point p2 (x + width, y + height);
