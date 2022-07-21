@@ -40,6 +40,12 @@ const cv::Scalar MAGENTA (255, 0, 255);
 const std::vector<cv::Scalar> COLORS {RED, GREEN, BLUE, YELLOW, CYAN, MAGENTA};
 
 /**
+ * Show a set of images
+ * @param images vector if images of type cv::Mat
+ */
+void show_images(const std::vector<cv::Mat>& images, const std::string& window_name);
+
+/**
  * Load a single image from its path
  * @param path path of the image to be loaded
  * @return image as cv::Mat object

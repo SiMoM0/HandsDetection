@@ -8,17 +8,11 @@ using namespace std;
 
 int main() {
 	//DETECTOR CLASS TEST
+
 	Detector hd ("./Dataset/rgb/");
 	Prediction pred = hd.detect();
-	vector<Mat> labeled_images = pred.get_output();
-	vector<vector<Rect>> bbox = pred.get_bbox();
-
-	//show images
-	for(int i=0; i<labeled_images.size(); ++i) {
-		//cout << bbox[i][0] << endl;
-		imshow("IMAGE", labeled_images[i]);
-		waitKey(0);
-	}
+	//show all output images
+	pred.show_results();
 	
 	// OLD TEST
 	//load network

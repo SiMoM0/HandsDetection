@@ -6,6 +6,8 @@
 #include "../include/utils.hpp"
 #include "../include/detection.hpp"
 
+//Detector class and functions definition
+
 Detector::Detector() {
     network = cv::dnn::readNet(NETWORK_PATH);
 }
@@ -13,6 +15,27 @@ Detector::Detector() {
 Detector::Detector(const std::string& images_path) {
     network = cv::dnn::readNet(NETWORK_PATH);
     input_images = load_images(images_path);
+}
+
+void Detector::add_images(const std::string& images_path) {
+    std::vector<cv::Mat> images = load_images(images_path);
+    for(int i=0; i<images.size(); ++i) {
+        input_images.push_back(images[i]);
+    }
+}
+
+void Detector::add_images(const std::vector<cv::Mat> images) {
+    for(int i=0; i<images.size(); ++i) {
+        input_images.push_back(images[i]);
+    }
+}
+
+void Detector::add_image(const std::string& image_path) {
+    input_images.push_back(load_image(image_path));
+}
+
+void Detector::add_image(const cv::Mat& image) {
+    input_images.push_back(image);
 }
 
 std::vector<cv::Mat> Detector::forward_pass(const cv::Mat& img) {
@@ -24,7 +47,6 @@ std::vector<cv::Mat> Detector::forward_pass(const cv::Mat& img) {
     //Get and save output detections
     std::vector<cv::Mat> outputs;
     network.forward(outputs, network.getUnconnectedOutLayersNames());
-    net_outputs.push_back(outputs);
 
     return outputs;
 }
@@ -85,9 +107,8 @@ std::vector<cv::Rect> Detector::convert_boxes(const cv::Mat& img, const std::vec
         best_bbox.push_back(bbox[indices[i]]);
     }
 
-    //add bounding box of current image
+    //bounding box of current image
     printf("Number of final bounding box: %d\n", best_bbox.size());
-    bounding_box.push_back(best_bbox);
     
     return best_bbox;
 }
@@ -103,16 +124,13 @@ cv::Mat Detector::generate_labels(const cv::Mat& img, const std::vector<cv::Rect
         int y = boxes[i].y;
         int width = boxes[i].width;
         int height = boxes[i].height;
-        printf("LABEL: %d %d %d %d\n", x, y, width, height);
+        //printf("LABEL: %d %d %d %d\n", x, y, width, height);
         
         //Create the two points for the rectangle
 		cv::Point p1 (x, y);
 		cv::Point p2 (x + width, y + height);
 		cv::rectangle(temp, p1, p2, GREEN, 3);
 	}
-    //store new labeled image
-    output_images.push_back(temp);
-
     return temp;
 }
 
@@ -121,17 +139,39 @@ Prediction Detector::detect() {
         cv::Mat img = input_images[i];
         //call the three functions for the general prediction
         std::vector<cv::Mat> output = forward_pass(img);
+        //Store output of the network
+        net_outputs.push_back(output);
         std::vector<cv::Rect> bbox = convert_boxes(img, output);
+        //Store bounding box
+        bounding_box.push_back(bbox);
         cv::Mat det_img = generate_labels(img, bbox);
+        //Store labeled image
+        output_images.push_back(det_img);
     }
 
     return Prediction(input_images, bounding_box, output_images);
 }
 
+cv::Mat Detector::detect(const cv::Mat& img) {
+    std::vector<cv::Mat> output = forward_pass(img);
+    std::vector<cv::Rect> bbox = convert_boxes(img, output);
+    return generate_labels(img, bbox);
+}
+
+//Prediction class and functions definition
+
 Prediction::Prediction(const std::vector<cv::Mat>& input_images, const std::vector<std::vector<cv::Rect>>& bounding_box, const std::vector<cv::Mat>& output_images) {
     this->input_images = input_images;
     this->bounding_box = bounding_box;
     this->output_images = output_images;
+}
+
+void Prediction::show_inputs() {
+    show_images(input_images, "Input Image");
+}
+
+void Prediction::show_results() {
+    show_images(output_images, "Bounding Box");
 }
 
 /* OLD IMPLEMENTATION

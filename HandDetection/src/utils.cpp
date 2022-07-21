@@ -3,6 +3,15 @@
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 
+void show_images(const std::vector<cv::Mat>& images, const std::string& window_name) {
+    //create window with input name
+    cv::namedWindow(window_name);
+    for(int i=0; i<images.size(); ++i) {
+        cv::imshow(window_name, images[i]);
+        cv::waitKey(0);
+    }
+}
+
 cv::Mat load_image(const std::string& path) {
     //TODO: add path check
     cv::Mat img = cv::imread(path);

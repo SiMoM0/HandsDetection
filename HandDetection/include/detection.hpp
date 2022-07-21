@@ -29,6 +29,11 @@ class Prediction {
         Prediction(const std::vector<cv::Mat>& input_images, const std::vector<std::vector<cv::Rect>>& bounding_box, const std::vector<cv::Mat>& output_images);
 
         /**
+         * Destructor for Prediction class
+         */
+        ~Prediction() {}
+
+        /**
          * Number of images contained in the prediction. Same number of input and output images.
          * @return integer number correponding to the size
          */
@@ -51,6 +56,16 @@ class Prediction {
          * @return output images with bounding box drawn
          */
         std::vector<cv::Mat> get_output() {return output_images;}
+
+        /**
+         * Display all input images
+         */
+        void show_inputs();
+
+        /**
+         * Display all images with corresponding bounding box
+         */
+        void show_results();
 
     private:
         std::vector<cv::Mat> input_images;
@@ -75,6 +90,17 @@ class Detector {
          * @param images_path directory path where images are stored
          */
         Detector(const std::string& images_path);
+
+        /**
+         * Destructor for Detector class
+         */
+        ~Detector() {}
+
+        /**
+         * Number of images contained
+         * @return integer number corresponding to the number of input images
+         */
+        int size() {return input_images.size();}
 
         /**
          * Load images from a given path
@@ -105,6 +131,13 @@ class Detector {
          * @return a Prediction object type
          */
         Prediction detect();
+
+        /**
+         * Perform bounding box detection on a single image
+         * @param img input image
+         * @return output image with bounding box drawn
+         */
+        cv::Mat detect(const cv::Mat& img);
 
         //TODO: add destructor, similar and other functions
 
