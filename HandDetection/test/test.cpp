@@ -6,27 +6,59 @@
 using namespace cv;
 using namespace std;
 
-int main() {	
+int main() {
+	//DETECTOR CLASS TEST
+	Detector hd ("./Dataset/rgb/");
+	Prediction pred = hd.detect();
+	vector<Mat> labeled_images = pred.get_output();
+	vector<vector<Rect>> bbox = pred.get_bbox();
+
+	//show images
+	for(int i=0; i<labeled_images.size(); ++i) {
+		//cout << bbox[i][0] << endl;
+		imshow("IMAGE", labeled_images[i]);
+		waitKey(0);
+	}
+	
+	// OLD TEST
 	//load network
     //string format: [Windows -> "./Model/best.onnx"], [Linux -> "../Model/best.onnx"]
-    string net_path = "./Model/best.onnx";
+    /*string net_path = "./Model/best.onnx";
 	auto model = dnn::readNet(net_path);
 	
+	int num = 10;
+	for(int i=10; i<31; ++i) {
+		string path = "./Dataset/rgb/" + to_string(i);
+		path += ".jpg";
+
+		Mat img = imread(path);
+
+		vector<Mat> outputs = predict(img, model);
+		printf("DONE DETECTION\n");
+		vector<Rect> boxes = get_boxes(img, outputs);
+		printf("BOUNDING BOXES\n");
+
+		draw_boxes(img, boxes);
+
+		imshow("BBOX", img);
+		waitKey(0);
+	}*/
+
 	//input image
-	string path = "./Dataset/rgb/01.jpg";
-	Mat img = imread(path);
-	imshow("Input image", img);
-	waitKey(0);
-
-	vector<Mat> outputs = detect(img, model);
-	printf("DETECTED\n");
-	vector<Rect> boxes = get_boxes(img, outputs);
-	printf("BOUNDING BOXES\n");
-
-	draw_boxes(img, boxes);
-
-	imshow("BBOX", img);
-	waitKey(0);
+	//string path = "./Dataset/rgb/01.jpg";
+	//Mat img = imread(path);
+	//imshow("Input image", img);
+	//waitKey(0);
+//
+	//vector<Mat> outputs = predict(img, model);
+	//printf("DONE DETECTION\n");
+	//vector<Rect> boxes = get_boxes(img, outputs);
+	//printf("OBTAINED BOUNDING BOXES\n");
+//
+	//draw_boxes(img, boxes);
+//
+	//imshow("BBOX", img);
+	//waitKey(0);
 	
     return 0;
 }

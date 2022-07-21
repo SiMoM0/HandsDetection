@@ -1,7 +1,7 @@
 //Header file for the segmentation task
-#ifndef SEGMENTATION
-#define SEGMENTATION
+#ifndef SEGMENTATION_H
+#define SEGMENTATION_H
 
 #include <opencv2/core.hpp>
 
-#endif //SEGMENTATION
+#endif //SEGMENTATION_H
