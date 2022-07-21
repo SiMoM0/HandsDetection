@@ -3,6 +3,12 @@
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 
+void show_image(const cv::Mat& img, const std::string& window_name = "Image") {
+    cv::namedWindow(window_name);
+    cv::imshow(window_name, img);
+    cv::waitKey(0);
+}
+
 void show_images(const std::vector<cv::Mat>& images, const std::string& window_name) {
     //create window with input name
     cv::namedWindow(window_name);

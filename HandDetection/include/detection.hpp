@@ -15,18 +15,18 @@
 /**
  * Class Predictions
  * 
- * Contains all the input images, list of bounding box and labeled images
+ * Contains the input image, list of bounding box and labeled image
  * output from the a Detector object
  */
 class Prediction {
     public:
         /**
          * Create Prediction object
-         * @param input_images list of input images
-         * @param bounding_box list of all bounding box for each input image
-         * @param output_images list of all images with corresponding bounding box drawn
+         * @param input_image input image
+         * @param bounding_box list of all bounding box fo input image
+         * @param output_image image with corresponding bounding box drawn
          */
-        Prediction(const std::vector<cv::Mat>& input_images, const std::vector<std::vector<cv::Rect>>& bounding_box, const std::vector<cv::Mat>& output_images);
+        Prediction(const cv::Mat& input_image, const std::vector<cv::Rect>& bounding_box, const cv::Mat& output_image);
 
         /**
          * Destructor for Prediction class
@@ -34,43 +34,37 @@ class Prediction {
         ~Prediction() {}
 
         /**
-         * Number of images contained in the prediction. Same number of input and output images.
-         * @return integer number correponding to the size
+         * Get the input image
+         * @return cv::Mat input image
          */
-        int size() {return input_images.size();}
-
-        /**
-         * Get the list of input images
-         * @return vector of input images
-         */
-        std::vector<cv::Mat> get_input() {return input_images;}
+        cv::Mat get_input() {return input_image;}
 
         /**
          * Get the list of all bounding box
-         * @return list of bounding box for each image
+         * @return list of bounding box for input image
          */
-        std::vector<std::vector<cv::Rect>> get_bbox() {return bounding_box;}
+        std::vector<cv::Rect> get_bbox() {return bounding_box;}
 
         /**
-         * Get the vector of output images
-         * @return output images with bounding box drawn
+         * Get the output image with bouding box
+         * @return cv::Mat output image with bounding box drawn
          */
-        std::vector<cv::Mat> get_output() {return output_images;}
+        std::vector<cv::Mat> get_output() {return output_image;}
 
         /**
-         * Display all input images
+         * Display input image
          */
-        void show_inputs();
+        void show_input();
 
         /**
-         * Display all images with corresponding bounding box
+         * Display image with corresponding bounding box
          */
         void show_results();
 
     private:
-        std::vector<cv::Mat> input_images;
-        std::vector<std::vector<cv::Rect>> bounding_box;
-        std::vector<cv::Mat> output_images;
+        cv::Mat input_image;
+        std::vector<cv::Rect> bounding_box;
+        cv::Mat output_image;
 };
 
 /**
@@ -128,16 +122,16 @@ class Detector {
 
         /**
          * Perform the detection on all the images loaded
-         * @return a Prediction object type
+         * @return a vector of Prediction object type
          */
-        Prediction detect();
+        std::vector<Prediction> detect();
 
         /**
          * Perform bounding box detection on a single image
          * @param img input image
-         * @return output image with bounding box drawn
+         * @return Prediction object
          */
-        cv::Mat detect(const cv::Mat& img);
+        Prediction detect(const cv::Mat& img);
 
         //TODO: add destructor, similar and other functions
 

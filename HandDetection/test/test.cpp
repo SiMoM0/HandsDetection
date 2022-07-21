@@ -10,10 +10,12 @@ int main() {
 	//DETECTOR CLASS TEST
 
 	Detector hd ("./Dataset/rgb/");
-	Prediction pred = hd.detect();
+	vector<Prediction> pred = hd.detect();
 	//show all output images
-	pred.show_results();
-	
+	for(int i=0; i<pred.size(); ++i) {
+		pred[i].show_results();
+	}
+
 	// OLD TEST
 	//load network
     //string format: [Windows -> "./Model/best.onnx"], [Linux -> "../Model/best.onnx"]

@@ -134,7 +134,9 @@ cv::Mat Detector::generate_labels(const cv::Mat& img, const std::vector<cv::Rect
     return temp;
 }
 
-Prediction Detector::detect() {
+std::vector<Prediction> Detector::detect() {
+    //output vector of Prediction objects
+    std::vector<Prediction> pred;
     for(int i=0; i<input_images.size(); ++i) {
         cv::Mat img = input_images[i];
         //call the three functions for the general prediction
@@ -147,31 +149,36 @@ Prediction Detector::detect() {
         cv::Mat det_img = generate_labels(img, bbox);
         //Store labeled image
         output_images.push_back(det_img);
+
+        //store new prediction
+        pred.push_back(Prediction(input_images[i], bbox, det_img));
     }
 
-    return Prediction(input_images, bounding_box, output_images);
+    return pred;
 }
 
-cv::Mat Detector::detect(const cv::Mat& img) {
+Prediction Detector::detect(const cv::Mat& img) {
     std::vector<cv::Mat> output = forward_pass(img);
     std::vector<cv::Rect> bbox = convert_boxes(img, output);
-    return generate_labels(img, bbox);
+    cv::Mat det_img = generate_labels(img, bbox);
+
+    return Prediction(img, bbox, det_img);
 }
 
 //Prediction class and functions definition
 
-Prediction::Prediction(const std::vector<cv::Mat>& input_images, const std::vector<std::vector<cv::Rect>>& bounding_box, const std::vector<cv::Mat>& output_images) {
-    this->input_images = input_images;
+Prediction::Prediction(const cv::Mat& input_image, const std::vector<cv::Rect>& bounding_box, const cv::Mat& output_image) {
+    this->input_image = input_image;
     this->bounding_box = bounding_box;
-    this->output_images = output_images;
+    this->output_image = output_image;
 }
 
-void Prediction::show_inputs() {
-    show_images(input_images, "Input Image");
+void Prediction::show_input() {
+    show_image(input_image, "Input Image");
 }
 
 void Prediction::show_results() {
-    show_images(output_images, "Bounding Box");
+    show_image(output_image, "Bounding Box");
 }
 
 /* OLD IMPLEMENTATION
