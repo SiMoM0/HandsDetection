@@ -1,5 +1,6 @@
 //Implementation of the header "utils.hpp"
 #include <iostream>
+#include <fstream>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 
@@ -45,4 +46,44 @@ std::vector<cv::Mat> load_images(const std::string& path) {
     }
     //return vector of loaded images
     return images;
+}
+
+std::vector<cv::Rect> load_bbox(const std::string& file_path) {
+    //vector to store bounding box
+    std::vector<cv::Rect> bounding_box;
+    //get file
+    std::ifstream infile(file_path);
+    //rectangle variable
+    int x, y, width, height;
+    while(infile >> x >> y >> width >> height) {
+        cv::Rect box (x, y, width, height);
+        bounding_box.push_back(box);
+    }
+
+    return bounding_box;
+}
+
+float IoU(const cv::Rect& prediction, const cv::Rect& ground_truth) {
+    //intersection between two bounding box
+    cv::Rect intersection = prediction & ground_truth;
+    int inter_area = intersection.area();
+    //union of the two rectangle
+    int union_area = prediction.area() + ground_truth.area() - intersection.area();
+    //iou float value
+    float iou = (float) inter_area/union_area;
+
+    return iou;
+}
+
+float IoU(const std::vector<cv::Rect>& prediction, const std::vector<cv::Rect>& ground_truth) {
+    float iou = 0;
+    //TODO: check if they have the same dimension (?)
+    //loop through all the bounding box
+    for(int i=0; i<prediction.size(); ++i) {
+        for(int j=0; j<ground_truth.size(); ++j) {
+            iou += IoU(prediction[i], ground_truth[j]);
+        }
+    }
+
+    return iou/prediction.size();
 }

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include "../include/utils.hpp"
 #include "../include/detection.hpp"
 
 using namespace cv;
@@ -11,9 +12,18 @@ int main() {
 
 	Detector hd ("./Dataset/rgb/");
 	vector<Prediction> pred = hd.detect();
+	//load ground truth boudning box
+	vector<cv::String> fn;
+	glob("./Dataset/det/", fn, true);
+	
 	//show all output images
 	for(int i=0; i<pred.size(); ++i) {
-		pred[i].show_results();
+		//load real boudning box
+		vector<Rect> ground_truth = load_bbox(fn[i]);
+		float iou = pred[i].evaluate(ground_truth);
+		printf("IoU value: %f\n", iou);
+		//show image with all boudning box
+		pred[i].show_results(ground_truth);
 	}
 
 	// OLD TEST

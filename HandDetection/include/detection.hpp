@@ -61,6 +61,19 @@ class Prediction {
          */
         void show_results();
 
+        /**
+         * Display image with predicted bounding box and real boudning box
+         * @param ground_truth real boudning box
+         */
+        void show_results(const std::vector<cv::Rect>& ground_truth);
+
+        /**
+         * Evaluate predicted bounding box compared to the ground truth using IoU metric
+         * @param ground_truth true bounding box of image
+         * @return IoU float value
+         */
+        float evaluate(const std::vector<cv::Rect>& ground_truth);
+
     private:
         cv::Mat input_image;
         std::vector<cv::Rect> bounding_box;

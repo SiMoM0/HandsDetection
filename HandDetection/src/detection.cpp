@@ -129,7 +129,7 @@ cv::Mat Detector::generate_labels(const cv::Mat& img, const std::vector<cv::Rect
         //Create the two points for the rectangle
 		cv::Point p1 (x, y);
 		cv::Point p2 (x + width, y + height);
-		cv::rectangle(temp, p1, p2, GREEN, 3);
+		cv::rectangle(temp, p1, p2, RED, 3);
 	}
     return temp;
 }
@@ -179,6 +179,30 @@ void Prediction::show_input() {
 
 void Prediction::show_results() {
     show_image(output_image, "Bounding Box");
+}
+
+void Prediction::show_results(const std::vector<cv::Rect>& ground_truth) {
+    //temp image
+    cv::Mat temp = output_image.clone();
+    for(int i=0; i<ground_truth.size(); ++i) {
+        //Extract and compute the attributes
+        int x = ground_truth[i].x;
+        int y = ground_truth[i].y;
+        int width = ground_truth[i].width;
+        int height = ground_truth[i].height;
+        //printf("LABEL: %d %d %d %d\n", x, y, width, height);
+        
+        //Create the two points for the rectangle
+		cv::Point p1 (x, y);
+		cv::Point p2 (x + width, y + height);
+		cv::rectangle(temp, p1, p2, GREEN, 3);
+    }
+    //show image
+    show_image(temp, "Detection");
+}
+
+float Prediction::evaluate(const std::vector<cv::Rect>& ground_truth) {
+    return IoU(bounding_box, ground_truth);
 }
 
 /* OLD IMPLEMENTATION
