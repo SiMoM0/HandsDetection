@@ -15,39 +15,10 @@ Segmenter::Segmenter(Prediction& predicted_image) {
     get_box_region();
 }
 
-void Segmenter::print() {
-    cv::imshow("output", output_image);
-    cv::waitKey(0);
-    for (int i = 0; i < hand_regions.size(); i++) {
-        cv::Mat src = hand_regions[i];
-        
-        cv::Mat otsu (src.rows, src.cols, CV_8UC3);
-        otsuSegmentation(src, otsu, 13);
-
-        cv::Mat clusters, temp;
-        //with a blur filter the result improves significantly
-        cv::blur(src, temp, cv::Size(15, 15));
-        kmeansSegmentation(temp, clusters, 2);
-
-        cv::Mat hsv;
-        hsvSegmentation(src, hsv);
-
-        cv::namedWindow("image");
-        cv::imshow("image", src);
-        cv::waitKey(0);
-        /*
-        cv::imshow("otsu", otsu);
-        cv::waitKey(0);
-        cv::imshow("kmeans", clusters);
-        cv::waitKey(0);
-        */
-    }
-}
-
 void Segmenter::segment_regions() {
     for (int i = 0; i < hand_regions.size(); i++) {
         cv::Mat tmp;
-        hsvSegmentation(hand_regions[i], tmp);
+        ycbSegmentation(hand_regions[i], tmp);
         hand_segmented.push_back(tmp);
     }
 }
@@ -119,7 +90,7 @@ void hsvSegmentation(const cv::Mat& input, cv::Mat& output) {
 
 }
 
-/*
+
 void ycbSegmentation(const cv::Mat& input, cv::Mat& output) {
     cv::Mat image;
     
@@ -136,16 +107,12 @@ void ycbSegmentation(const cv::Mat& input, cv::Mat& output) {
     cv::split(ycb, ycrcbChan);
 
     //set a treshold
-    int thresh = 40;
+    int thresh = 20;
     cv::Scalar threshold(thresh, thresh, thresh);
 
-    cv::Mat mask, tmp;
-    cv::subtract(ycb, threshold, tmp);
-    cv::split(ycb, ycrcbChan);
-    cv::Scalar minYCB = cv::Scalar(ycrcbChan[0], ycrcbChan[1], ycrcbChan[2]);
-    cv::add(ycb, threshold, tmp);
-    cv::split(ycb, ycrcbChan);
-    cv::Scalar maxYCB = cv::Scalar(ycrcbChan[0], ycrcbChan[1], ycrcbChan[2]);
+    cv::Mat mask, minYCB, maxYCB, tmp;
+    cv::subtract(ycb, threshold, minYCB);
+    cv::add(ycb, threshold, maxYCB);
     
 
     cv::inRange(ycb, minYCB, maxYCB, tmp);
@@ -162,7 +129,7 @@ void ycbSegmentation(const cv::Mat& input, cv::Mat& output) {
     
     cv::imshow("YCB", output);
 }
-*/
+
 
 // Doesn't work. Fix it
 void Dilation(const cv::Mat& src, const cv::Mat& dst, int dilation_elem, int dilation_size) {
