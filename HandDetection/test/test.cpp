@@ -1,8 +1,8 @@
 #include <iostream>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-#include "../include/utils.hpp"
 #include "../include/detection.hpp"
+#include "../include/segmentation.hpp"
 
 using namespace cv;
 using namespace std;
@@ -10,21 +10,23 @@ using namespace std;
 int main() {
 	//DETECTOR CLASS TEST
 
-	Detector hd ("./Dataset/rgb/");
+	//Detector hd ("./Dataset/rgb/");
+	Detector hd (DATASET_PATH);
 	vector<Prediction> pred = hd.detect();
-	//load ground truth boudning box
-	vector<cv::String> fn;
-	glob("./Dataset/det/", fn, true);
-	
 	//show all output images
+	/*
 	for(int i=0; i<pred.size(); ++i) {
-		//load real boudning box
-		vector<Rect> ground_truth = load_bbox(fn[i]);
-		float iou = pred[i].evaluate(ground_truth);
-		printf("IoU value: %f\n", iou);
-		//show image with all boudning box
-		pred[i].show_results(ground_truth);
+		pred[i].show_results();
 	}
+	*/
+	for (int i = 0; i < pred.size(); i++) {
+		Segmenter p(pred[i]);
+		p.segment_regions();
+		p.write_segmented();
+	}
+	
+
+
 
 	// OLD TEST
 	//load network
