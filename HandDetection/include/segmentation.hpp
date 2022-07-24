@@ -54,6 +54,7 @@ class Segmenter {
         std::vector<cv::Rect> bounding_boxes;
         std::vector<cv::Mat> hand_regions;
         std::vector<cv::Mat> hand_segmented;
+        std::vector<cv::Mat> mask_regions;
 
         /**
          * Get all the boxes in the image that contains a hand
@@ -65,10 +66,20 @@ void otsuSegmentation(const cv::Mat& input, cv::Mat& output, const int ksize);
 
 void kmeansSegmentation(const cv::Mat& input, cv::Mat& output, const int k, const bool color=false);
 
+void regionGrowing(const cv::Mat& input, cv::Mat& mask, const int ksize, uchar similarity);
+
 void hsvSegmentation(const cv::Mat& input, cv::Mat& output);
 
 void Dilation(const cv::Mat& src, const cv::Mat& dst, int dilation_elem, int dilation_size);
 
 void ycbSegmentation(const cv::Mat& input, cv::Mat& output);
+
+void bgrSegmentation(const cv::Mat& input, cv::Mat& output);
+
+void hslSegmentation(const cv::Mat& input, cv::Mat& output);
+
+void htsSegmentation(const cv::Mat& input, cv::Mat& output);
+
+void cannyEdge(const cv::Mat& input, cv::Mat& output, int sz, int kernel_size);
 
 #endif //SEGMENTATION_H
