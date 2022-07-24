@@ -6,8 +6,6 @@
 #include "../include/detection.hpp"
 #include "../include/utils.hpp"
 
-
-
 Segmenter::Segmenter(Prediction& predicted_image) {
     masked_image = cv::Mat::zeros(predicted_image.get_input().size(), CV_8U);
     output_image = predicted_image.get_input().clone();
@@ -18,8 +16,10 @@ Segmenter::Segmenter(Prediction& predicted_image) {
 void Segmenter::segment_regions() {
     for (int i = 0; i < hand_regions.size(); i++) {
         cv::Mat tmp;
-        ycbSegmentation(hand_regions[i], tmp);
-        hand_segmented.push_back(tmp);
+        //hslSegmentation(hand_regions[i], tmp);
+        //hand_segmented.push_back(tmp);
+        htsSegmentation(hand_regions[i], tmp);
+        std::cout<<"Hurraaa"<<std::endl;
     }
 }
 
@@ -72,22 +72,106 @@ void hsvSegmentation(const cv::Mat& input, cv::Mat& output) {
     cv::Mat rgb[3];
     cv::split(hsv, rgb);
     for (int i = 0; i < input.channels(); i++) {
-        //rgb[i] = rgb[i].mul(mask);
         cv::bitwise_and(rgb[i], mask, rgb[i]);
     }
     std::vector<cv::Mat> dest(std::begin(rgb), std::end(rgb));
     cv::merge(dest, output);
-
-    int dilation_size = 1;
-    cv::Mat dilat;
-    cv::Mat element = cv::getStructuringElement( cv::MORPH_RECT,
-                    cv::Size( 2*dilation_size + 1, 2*dilation_size+1 ),
-                    cv::Point( dilation_size, dilation_size ) );
-    cv::dilate(output, dilat, element);
     
     
     cv::cvtColor(output, output, cv::COLOR_HSV2BGR);
 
+}
+
+void regionGrowing(const cv::Mat& input, cv::Mat& mask, const int ksize, uchar similarity) {
+    //number of rows and columns of input and output image
+    int rows = input.rows;
+    int cols = input.cols;
+    //predicate Q for controlling growing, 0 if not visited yet, 255 otherwise
+    cv::Mat Q = cv::Mat::zeros(rows, cols, CV_8UC1);
+
+    //convert to grayscale, apply blur and threshold (inverse to obtain white for cracks)
+    cv::Mat gray, img;
+    cv::cvtColor(input, gray, cv::COLOR_BGR2GRAY);
+    cv::blur(gray, img, cv::Size(ksize, ksize));
+    cv::threshold(img, img, 50, 255, cv::THRESH_BINARY_INV);
+    //cv::imshow("Threshold", img);
+
+    //loop threshold image to erode pixel groups in a single one (there may be better methods (?))
+    for(int i=0; i<rows; ++i) {
+        for(int j=0; j<cols; ++j) {
+            //if the current pixel is black pass this iteration
+            if (img.at<uchar>(i, j) == 0)
+                continue;
+            //flag for controls on neighbors
+            bool flag = false;
+            //check right, down, left and up pixel, in this order
+            if(j < cols-1 && img.at<uchar>(i, j+1) == 255) {
+                flag = true;
+            } else if(i < rows-1 && img.at<uchar>(i+1, j) == 255) {
+                flag = true;
+            } else if(j > 0 && img.at<uchar>(i, j-1) == 255) {
+                flag = true;
+            } else if(i > 0 && img.at<uchar>(i-1, j) == 255) {
+                flag = true;
+            }
+
+            //change color if flag is true after checking all neighbors
+            if(flag)
+                img.at<uchar>(i, j) = 0;
+        }
+    }
+
+    //cv::imshow("Erosion", img);
+    //cv::waitKey(0);
+
+    //point to be visited
+    std::vector<std::pair<int, int>> points;
+
+    int p = 0;
+    //add points of the skeleton image into the vector
+    for(int i=0; i<img.rows; ++i) {
+        for(int j=0; j<img.cols; ++j) {
+            if(img.at<uchar>(i, j) == 255) {
+                //add to points vector
+                //NOTE: not all the points of the skeleton image may be added, since they could be too much
+                points.push_back(std::pair<int, int>(i, j));
+                //std::printf("White point at (%d, %d)\n", i, j);
+                //update point counter
+                p++;
+            }
+        }
+    }
+    std::printf("Points: %d\n", p);
+    while(!points.empty()) {
+        //pop a single point
+        std::pair<int, int> p = points.back();
+        points.pop_back();
+
+        //get color value of the point
+        uchar color = gray.at<uchar>(p.first, p.second);
+        //set the current pixel visited
+        Q.at<uchar>(p.first, p.second) = 255;
+
+        //loop for each neighbour
+        for(int i=p.first-1; i<=p.first+1; ++i) {
+            for(int j=p.second-1; j<=p.second+1; ++j) {
+                //check if pixel coordinates exist
+                if(i>=0 && i<rows && j>=0 && j<cols) {
+                    //get neighbour pixel value
+                    uchar neigh = gray.at<uchar>(i, j);
+                    //check if it has been visited
+                    uchar visited = Q.at<uchar>(i, j);
+
+                    //check if the neighbour pixel is similar
+                    if(!visited && std::abs(neigh-color) <= similarity) {
+                        points.push_back(std::pair<int, int>(i, j));
+                    }
+                }
+            }
+        }
+    }
+    //copy Q into mask
+    mask = Q.clone();
 }
 
 
@@ -107,7 +191,7 @@ void ycbSegmentation(const cv::Mat& input, cv::Mat& output) {
     cv::split(ycb, ycrcbChan);
 
     //set a treshold
-    int thresh = 20;
+    int thresh = 70;
     cv::Scalar threshold(thresh, thresh, thresh);
 
     cv::Mat mask, minYCB, maxYCB, tmp;
@@ -128,6 +212,21 @@ void ycbSegmentation(const cv::Mat& input, cv::Mat& output) {
     cv::cvtColor(output, output, cv::COLOR_YCrCb2BGR);
     
     cv::imshow("YCB", output);
+}
+
+void bgrSegmentation(const cv::Mat& input, cv::Mat& output) {
+    cv::Vec3b bgrPixel(235, 198, 179);
+
+    cv::Mat3b bgr(bgrPixel);
+
+    int thresh = 40;
+    cv::Scalar minBGR = cv::Scalar(bgrPixel.val[0] - thresh, bgrPixel.val[1] - thresh, bgrPixel.val[2] - thresh);
+    cv::Scalar maxBGR = cv::Scalar((bgrPixel.val[0] + thresh) % 256, (bgrPixel.val[1] + thresh) % 256, (bgrPixel.val[2] + thresh) % 256);
+    
+    cv::inRange(bgr, minBGR, maxBGR, output);
+    cv::bitwise_and(bgr, bgr, output, output);
+    cv::imshow("Result BGR", output);
+    cv::waitKey(0);
 }
 
 
@@ -256,3 +355,53 @@ void kmeansSegmentation(const cv::Mat& input, cv::Mat& output, const int k, cons
         output = tmp.clone();
     }
 }
+
+void hslSegmentation(const cv::Mat& input, cv::Mat& output) {
+    cv::Mat lab;
+    cv::cvtColor(input, lab, cv::COLOR_BGR2Lab);
+
+    cv::Vec3b labPixel(lab.at<cv::Vec3b>(0,0));
+    
+    int thresh = 40;
+
+    cv::Scalar min = cv::Scalar(labPixel.val[0] - thresh, labPixel.val[1] - thresh, labPixel.val[2] - thresh);
+    cv::Scalar max = cv::Scalar(labPixel.val[0] + thresh, labPixel.val[1] + thresh, labPixel.val[2] + thresh);
+
+    cv::Mat mask;
+    cv::inRange(lab, min, max, mask);
+    cv::bitwise_and(lab, lab, output, mask);
+
+    cv::imshow("out", output);
+    cv::waitKey(0);
+}
+
+void htsSegmentation(const cv::Mat& input, cv::Mat& output) {
+    cv::Mat edges;
+    cannyEdge(input, edges, 21, 5);
+
+    int dilation_size = 2;
+    cv::Mat dilat;
+    cv::Mat element = cv::getStructuringElement( cv::MORPH_CROSS,
+                    cv::Size( 2*dilation_size + 1, 2*dilation_size+1 ),
+                    cv::Point( dilation_size, dilation_size ) );
+    cv::dilate(edges, dilat, element);
+    cv::Mat eroded;
+    cv::erode(dilat, eroded, element);
+
+    cv::imshow("dilate", eroded);
+}
+
+void cannyEdge(const cv::Mat& input, cv::Mat& output, int sz, int kernel_size) {
+    cv::Mat gray;
+    cv::cvtColor(input, gray, cv::COLOR_BGR2GRAY);
+    cv::blur(gray, output, cv::Size(sz, sz));
+    cv::Canny(output, output, 0, 180, kernel_size);
+}
+
+
+
+void edgeTraversalAlgorithm(const cv::Mat& input, cv::Mat& output) {
+    
+}
+
+
