@@ -16,6 +16,10 @@ int main() {
 	vector<cv::String> fn;
 	glob("./Dataset/det/", fn, true);
 	
+	//test save_bbox function
+	//printf("Saving bounding box test\n");
+	//save_bbox(pred[0].get_bbox(), "bounding_box.txt");
+
 	//show all output images
 	for(int i=0; i<pred.size(); ++i) {
 		//load real boudning box

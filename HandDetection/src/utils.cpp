@@ -10,7 +10,7 @@ void show_image(const cv::Mat& img, const std::string& window_name = "Image") {
     cv::waitKey(0);
 }
 
-void show_images(const std::vector<cv::Mat>& images, const std::string& window_name) {
+void show_images(const std::vector<cv::Mat>& images, const std::string& window_name = "Image") {
     //create window with input name
     cv::namedWindow(window_name);
     for(int i=0; i<images.size(); ++i) {
@@ -20,16 +20,17 @@ void show_images(const std::vector<cv::Mat>& images, const std::string& window_n
 }
 
 cv::Mat load_image(const std::string& path) {
-    //TODO: add path check
+    //try to read the image
     cv::Mat img = cv::imread(path);
         if(img.empty())
             std::printf("Could not open images at %s", path);
-            //FIXME: throw exception or return an empty/black image (?)
+            //throw exception
+            throw std::invalid_argument("Problem loading image\n");
     return img;
 }
 
 std::vector<cv::Mat> load_images(const std::string& path) {
-    //TODO: add path check
+    //try to read the images
     cv::String data_path (path);
     std::vector<cv::String> fn;
     cv::glob(data_path, fn, true);
@@ -40,7 +41,7 @@ std::vector<cv::Mat> load_images(const std::string& path) {
         cv::Mat img = cv::imread(fn[i]);
         //check loaded image
         if(img.empty())
-            std::printf("Could not load image at %s", fn[i]);
+            std::printf("Could not load image at %s\n", fn[i]);
         else
             images.push_back(img);
     }
@@ -77,13 +78,38 @@ float IoU(const cv::Rect& prediction, const cv::Rect& ground_truth) {
 
 float IoU(const std::vector<cv::Rect>& prediction, const std::vector<cv::Rect>& ground_truth) {
     float iou = 0;
-    //TODO: check if they have the same dimension (?)
+    //check if they have the same dimension
+    if(prediction.size() != ground_truth.size()) {
+        std::printf("Different number of bounding box found, IoU value might be incorrect\n");
+    }
     //loop through all the bounding box
     for(int i=0; i<prediction.size(); ++i) {
         for(int j=0; j<ground_truth.size(); ++j) {
             iou += IoU(prediction[i], ground_truth[j]);
         }
     }
+    //get the maximum number of bounding box between the true and predicted
+    int box_num = std::max(prediction.size(), ground_truth.size());
 
-    return iou/prediction.size();
+    return iou/box_num;
+}
+
+void save_bbox(const std::vector<cv::Rect> boxes, const std::string& file_name) {
+    //create and open txt file
+    std::ofstream output_file (file_name);
+    //write each line
+    for(int i=0; i<boxes.size(); ++i) {
+        int x = boxes[i].x;
+        int y = boxes[i].y;
+        int width = boxes[i].width;
+        int height = boxes[i].height;
+        //if last element don't use \n
+        if(i != boxes.size()-1) {
+            output_file << x << " " << y << " " << width << " " << height << "\n";
+        } else {
+            output_file << x << " " << y << " " << width << " " << height;
+        }
+    }
+    //close file
+    output_file.close();
 }

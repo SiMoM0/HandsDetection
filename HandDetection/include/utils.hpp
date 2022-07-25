@@ -50,7 +50,7 @@ void show_image(const cv::Mat& img, const std::string& window_name = "Image");
  * Show a set of images
  * @param images vector if images of type cv::Mat
  */
-void show_images(const std::vector<cv::Mat>& images, const std::string& window_name);
+void show_images(const std::vector<cv::Mat>& images, const std::string& window_name = "Image");
 
 /**
  * Load a single image from its path
@@ -93,8 +93,7 @@ float IoU(const std::vector<cv::Rect>& prediction, const std::vector<cv::Rect>& 
  * Save the list of bounding box in a txt file
  * @param boxes list of bounding box as std::vector<cv::Rect> object
  * @param file_name name of the file to be saved
- * @return true if the operation succeed, fals otherwise
  */
-bool save_bbox(const std::vector<cv::Rect> boxes, const std::string& file_name);
+void save_bbox(const std::vector<cv::Rect> boxes, const std::string& file_name);
 
 #endif //UTILS_H
