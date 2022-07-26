@@ -13,12 +13,24 @@ int main() {
 	//Detector hd ("./Dataset/rgb/");
 	Detector hd (DATASET_PATH);
 	vector<Prediction> pred = hd.detect();
+
+	//load ground truth boudning box
+	vector<cv::String> fn;
+	glob("./Dataset/det/", fn, true);
+	
+	//test save_bbox function
+	//printf("Saving bounding box test\n");
+	//save_bbox(pred[0].get_bbox(), "bounding_box.txt");
+
 	//show all output images
 	/*
 	for(int i=0; i<pred.size(); ++i) {
 		pred[i].show_results();
 	}
 	*/
+  
+  //SEGMENTATION CLASS TEST
+  
 	for (int i = 0; i < pred.size(); i++) {
 		Segmenter p(pred[i]);
 		p.segment_regions();
