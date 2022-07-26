@@ -67,6 +67,29 @@ cv::Mat load_image(const std::string& path);
 std::vector<cv::Mat> load_images(const std::string& path);
 
 /**
+ * Load bounding box from a txt file
+ * @param file_path path of the txt file
+ * @return list of bounding box as std::vector<cv::Rect> type
+ */
+std::vector<cv::Rect> load_bbox(const std::string& file_path);
+
+/**
+ * Evaluate IoU metric given the ground truth and predicted bounding box
+ * @param prediction the predicted bounding box
+ * @param ground_truth the real bounding box
+ * @return IoU value as float value
+ */
+float IoU(const cv::Rect& prediction, const cv::Rect& ground_truth);
+
+/**
+ * Evaluate IoU metric given a list of ground truth and a list of predicted bounding box
+ * @param prediction the vector of predicted bounding box
+ * @param ground_truth the vector of real bounding box
+ * @return IoU value as float value
+ */
+float IoU(const std::vector<cv::Rect>& prediction, const std::vector<cv::Rect>& ground_truth);
+
+/**
  * Save the list of bounding box in a txt file
  * @param boxes list of bounding box as std::vector<cv::Rect> object
  * @param file_name name of the file to be saved
