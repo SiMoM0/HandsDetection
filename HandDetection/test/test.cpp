@@ -17,7 +17,7 @@ int main() {
 
 	//load ground truth boudning box
 	vector<cv::String> fn;
-	glob("./Dataset/det/", fn, true);
+	glob(BBOX_PATH , fn, true);
 	
 	//test save_bbox function
 	//printf("Saving bounding box test\n");
