@@ -1,6 +1,7 @@
 #include <iostream>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include "../include/utils.hpp"
 #include "../include/detection.hpp"
 #include "../include/segmentation.hpp"
 
@@ -23,11 +24,14 @@ int main() {
 	//save_bbox(pred[0].get_bbox(), "bounding_box.txt");
 
 	//show all output images
-	/*
 	for(int i=0; i<pred.size(); ++i) {
-		pred[i].show_results();
+		//load real boudning box
+		vector<Rect> ground_truth = load_bbox(fn[i]);
+		float iou = pred[i].evaluate(ground_truth);
+		printf("IoU value: %f\n", iou);
+		//show image with all boudning box
+		pred[i].show_results(ground_truth);
 	}
-	*/
   
   //SEGMENTATION CLASS TEST
   

@@ -11,6 +11,7 @@
 #include <opencv2/core.hpp>
 
 //Network model file path
+//const std::string NETWORK_PATH = "./Model/best.onnx";
 const std::string NETWORK_PATH = MODEL_PATH;
 
 //Image width

@@ -52,6 +52,18 @@ class Prediction {
         std::vector<cv::Mat> get_output() {return output_image;}
 
         /**
+         * Indicates if the prediction contain some hands
+         * @return true if the input image contains hands, false otherwise
+         */
+        bool contains_hands();
+
+        /**
+         * Returns the number of hands found in the input image
+         * @return integer value representing number of hands
+         */
+        int hands_number();
+
+        /**
          * Display input image
          */
         void show_input();
@@ -215,6 +227,5 @@ class Detector {
 //void detect(const cv::Mat& input_image, cv::Mat& output_image, cv::dnn::Net& network);
 
 //TODO: functions for list of images
-//TODO: IoU function
 
 #endif //DETECTION_H

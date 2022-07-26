@@ -173,6 +173,17 @@ Prediction::Prediction(const cv::Mat& input_image, const std::vector<cv::Rect>& 
     this->output_image = output_image;
 }
 
+bool Prediction::contains_hands() {
+    if(bounding_box.size() == 0) {
+        return false;
+    }
+    return true;
+}
+
+int Prediction::hands_number() {
+    return bounding_box.size();
+}
+
 void Prediction::show_input() {
     show_image(input_image, "Input Image");
 }
