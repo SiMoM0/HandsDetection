@@ -82,4 +82,8 @@ void htsSegmentation(const cv::Mat& input, cv::Mat& output);
 
 void cannyEdge(const cv::Mat& input, cv::Mat& output, int sz, int kernel_size);
 
+void watershedSegmentation(const cv::Mat& input, cv::Mat& output);
+
+void multicolorSegmentation(const cv::Mat& input, cv::Mat& output);
+
 #endif //SEGMENTATION_H
