@@ -28,6 +28,7 @@ int main() {
 	//save_bbox(pred[0].get_bbox(), "bounding_box.txt");
 
 	//show all output images
+	/*
 	for(int i=0; i<pred.size(); ++i) {
 		printf("IMAGE %d\n", i+1);
 		//load real boudning box
@@ -37,14 +38,16 @@ int main() {
 		vector<Rect> bbox = pred[i].get_bbox();
 		//show image with predicted boudning box
 		pred[i].show_results();
-	}
+	}*/
   
   //SEGMENTATION CLASS TEST
+	glob(MASK_PATH, fn, true);
   
 	for (int i = 0; i < pred.size(); i++) {
-		Segmenter p(pred[i]);
+		Segmenter p(pred[i], fn[i]);
 		p.segment_regions();
 		p.write_segmented();
+		p.pixel_accuracy();
 	}
 	
 

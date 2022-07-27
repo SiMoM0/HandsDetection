@@ -24,8 +24,9 @@ class Segmenter {
         /**
          * Create Segmenter object
          * @param predicted_image Predicted object used to load the image and the bouding boxes
+         * @param path_mask path of true masked image
          */
-        Segmenter(Prediction& predicted_image);
+        Segmenter(Prediction& predicted_image, std::string path_mask);
 
         /**
          * Destructor for Segmenter class
@@ -42,6 +43,11 @@ class Segmenter {
          */
         void write_segmented();
 
+        /**
+         * Return rate of segmentation
+         */
+        float pixel_accuracy();
+
 
 
 
@@ -50,6 +56,7 @@ class Segmenter {
     
     private:
         cv::Mat masked_image;
+        cv::Mat true_mask;
         cv::Mat output_image;
         std::vector<cv::Rect> bounding_boxes;
         std::vector<cv::Mat> hand_regions;
@@ -85,5 +92,11 @@ void cannyEdge(const cv::Mat& input, cv::Mat& output, int sz, int kernel_size);
 void watershedSegmentation(const cv::Mat& input, cv::Mat& output);
 
 void multicolorSegmentation(const cv::Mat& input, cv::Mat& output);
+
+void blurMask(const cv::Mat& input, cv::Mat& mask, cv::Mat& output);
+
+void blurMaskborder(const cv::Mat& input, cv::Mat& mask, cv::Mat& output);
+
+void checkImage(const cv::Mat& input, cv::Mat& mask);
 
 #endif //SEGMENTATION_H

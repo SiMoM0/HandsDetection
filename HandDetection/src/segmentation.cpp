@@ -6,11 +6,12 @@
 #include "../include/detection.hpp"
 #include "../include/utils.hpp"
 
-Segmenter::Segmenter(Prediction& predicted_image) {
+Segmenter::Segmenter(Prediction& predicted_image, std::string path_mask) {
     masked_image = cv::Mat::zeros(predicted_image.get_input().size(), CV_8U);
     output_image = predicted_image.get_input().clone();
     bounding_boxes = predicted_image.get_bbox();
     get_box_region();
+    true_mask = cv::imread(path_mask, CV_8UC1);
 }
 
 void Segmenter::segment_regions() {
@@ -29,6 +30,33 @@ void Segmenter::segment_regions() {
         hsvSegmentation(hand_regions[i],tmp);
         hand_segmented.push_back(tmp);
         */
+        /*
+        cv::Mat tmp, blur;
+        cv::namedWindow("tmp");
+        
+        multicolorSegmentation(hand_regions[i],tmp);
+        blurMask(hand_regions[i], tmp, blur);
+        otsuSegmentation(blur,tmp, 5);
+
+        cv::Mat sharp;
+        double sigma = 1, threshold = 7, amount = 4;
+        cv::Mat low_contr = abs(hand_regions[i] - blur) < threshold;
+        sharp = hand_regions[i] * (1 + amount) + blur * (-amount);
+        cv::imshow("sharp",sharp);
+        otsuSegmentation(sharp,tmp,5);
+
+        int dilation_size = 2;
+        cv::Mat dilat, eroded;
+        cv::Mat element = cv::getStructuringElement( cv::MORPH_ELLIPSE,
+                    cv::Size( 2*dilation_size + 1, 2*dilation_size+1 ),
+                    cv::Point( dilation_size, dilation_size ) );
+        cv::erode(tmp, tmp, element);
+        //cv::dilate(eroded, tmp, element);
+        
+
+        hand_segmented.push_back(tmp);
+
+        */
 
         cv::Mat tmp;
         multicolorSegmentation(hand_regions[i],tmp);
@@ -37,23 +65,46 @@ void Segmenter::segment_regions() {
 }
 
 void Segmenter::write_segmented() {
+    masked_image = cv::Mat::zeros(output_image.size(), CV_8UC1);
     for (int i = 0; i < hand_segmented.size(); i++) {
 
         cv::Mat tmp(hand_regions[i]);
-
-        cv::imshow("segm", hand_segmented[i]);
 
         for (int j = 0; j < tmp.rows; j++) {
             for (int z = 0; z < tmp.cols; z++) {
                 if (hand_segmented[i].at<cv::Vec3b>(j,z) != cv::Vec3b(0,0,0)) {
                     output_image.at<cv::Vec3b>(bounding_boxes[i].y + j,bounding_boxes[i].x + z) = COL[i];
+
+                    masked_image.at<uchar>(bounding_boxes[i].y + j,bounding_boxes[i].x + z) = 255;
                 }
             }
         }
     }
-    cv::imshow("output", output_image);
-    cv::waitKey(0);
     
+}
+
+float Segmenter::pixel_accuracy() {
+    int TH = 0, FH = 0, trash = 0;
+    
+    for (unsigned int i = 0; i < true_mask.rows; i++) {
+        for (unsigned int j = 0; j < true_mask.cols; j++) {
+            uchar true_val = true_mask.at<uchar>(i,j);
+            uchar class_val = masked_image.at<uchar>(i,j);
+            if (true_val == 255 && class_val == 255) {
+                TH++;
+            }
+            if (true_val == 0 && class_val == 0) {
+                FH++;
+            }
+            if (true_val != class_val) {
+                trash++;
+            }
+        }
+    }
+    float result = 0;
+    result = (static_cast<float>(TH) + static_cast<float>(FH)) / static_cast<float>(true_mask.rows * true_mask.cols);
+    std::cout<<trash<<std::endl;
+    return result;
 }
 
 
@@ -273,11 +324,11 @@ void Dilation(const cv::Mat& src, const cv::Mat& dst, int dilation_elem, int dil
 void otsuSegmentation(const cv::Mat& input, cv::Mat& output, const int ksize) {
     cv::Mat gray, temp, mask;
     //convert input image to grayscale
-    //cv::cvtColor(input, gray, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(input, gray, cv::COLOR_BGR2GRAY);
     //apply blur filter
-    cv::blur(input, temp, cv::Size(ksize, ksize));
+    //cv::blur(input, temp, cv::Size(ksize, ksize));
     //Otsu optimal threshold to output image
-    double value = cv::threshold(temp, mask, 150, 230, cv::THRESH_BINARY | cv::THRESH_OTSU);
+    double value = cv::threshold(gray, mask, 100, 230, cv::THRESH_BINARY | cv::THRESH_OTSU);
     std::printf("Otsu threshold: %f\n", value);
 
     //---segment input image with the original colors---
@@ -285,8 +336,6 @@ void otsuSegmentation(const cv::Mat& input, cv::Mat& output, const int ksize) {
     //find the average values of both areas, comparing with otsu mask
     long sum1[3] = {0, 0, 0}, sum2[3] = {0, 0, 0};
     int count1 = 0, count2 = 0;
-
-    printf("Primo\n");
 
     //calculate sum of pixel's value in both areas
     for(int i=0; i<input.rows; ++i) {
@@ -315,7 +364,6 @@ void otsuSegmentation(const cv::Mat& input, cv::Mat& output, const int ksize) {
         avg2[i] = sum2[i] / count2;
         
     }
-    printf("Primo\n");
     //printf("%d, %d, %d\n", sum2[0], sum2[1], sum2[2]);
     //printf("%d\n", count1);
     //printf("%d\n", count2);
@@ -334,6 +382,7 @@ void otsuSegmentation(const cv::Mat& input, cv::Mat& output, const int ksize) {
     }
 
     cv::threshold(output, output, value, 255, 0);
+    //cv::adaptiveThreshold(output, output,255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY, 11, 2);
 }
 
 void kmeansSegmentation(const cv::Mat& input, cv::Mat& output, const int k, const bool color) {
@@ -509,7 +558,7 @@ void watershedSegmentation(const cv::Mat& input, cv::Mat& output) {
 
 void multicolorSegmentation(const cv::Mat& input, cv::Mat& output) {
     cv::Mat rgb, hsv, ycbcr;
-
+    
     output = input.clone();
     for (int i = 0; i < output.rows; i++) {
         for (int j = 0; j < output.cols; j++) {
@@ -524,20 +573,20 @@ void multicolorSegmentation(const cv::Mat& input, cv::Mat& output) {
             float V = *std::max_element(std::begin(RGB), std::end(RGB));
 
             float S;
-            float normalization_factor = *std::min_element(std::begin(RGB), std::end(RGB));
+            float normalization_factor = V - *std::min_element(std::begin(RGB), std::end(RGB));
             if (V != 0) {
-                S = V - normalization_factor;
+                S = normalization_factor;
             } else {
                 S = 0;
             }
 
             float H;
             if (V == tmp[2]) {
-                H = (60 * (G - B)) / (V - normalization_factor);
+                H = (60 * (G - B)) / normalization_factor;
             } else if (V == tmp[1]) {
-                H = 2 + (60 * (B - R)) / (V - normalization_factor);
+                H = 2 + (60 * (B - R)) / normalization_factor;
             } else if (V == tmp[0]){
-                H = 4 + (60 * (R - G)) / (V - normalization_factor);
+                H = 4 + (60 * (R - G)) / normalization_factor;
             }
 
             if (H < 0) {
@@ -556,43 +605,43 @@ void multicolorSegmentation(const cv::Mat& input, cv::Mat& output) {
                 R_G = R / G;
             }
 
-            if (R_G <= 1.185 &&
-                (H >= 0 && H <= 25) || (H >= 335 && H <= 360) &&
+            if (!(R_G > 1.185) &&
+                (H >= 0 && H <= 50) || (H >= 335 && H <= 360) &&
                 (S >= 0.2 && S <= 0.6) &&
                 (Cb > 77 && Cb < 127) &&
                 (Cr > 133 && Cr < 173)) {
                     output.at<cv::Vec3b>(i,j) = cv::Vec3b(0,0,0);
-            }
-
-        }
-    }
-
-    /*
-    for (int i = 0; i < output.rows; i++) {
-        for (int j = 0; j < output.cols; j++) {
-            cv::Vec3b tmp = input.at<cv::Vec3b>(i,j);
-            cv::Vec3f hsv_value = hsv.at<cv::Vec3f>(i,j);
-            cv::Vec3f ycbcr_value = ycbcr.at<cv::Vec3f>(i,j);
-            float divisione;
-            if (tmp[1] != 0) {
-                divisione = tmp[2]/tmp[1];
             } else {
-                divisione = 1.186;
-            }
-            if (divisione <= 1.185 &&
-                (hsv_value[0] >= 0 && hsv_value[0] <= 25) || (hsv_value[0] >= 335 && hsv_value[0] <= 360) &&
-                (hsv_value[1] >= 0.2 && hsv_value[1] <= 0.6) &&
-                (ycbcr_value[1] > 77 && ycbcr_value[1] < 127) &&
-                (ycbcr_value[2] > 133 && ycbcr_value[2] < 173)) {
-                    output.at<cv::Vec3b>(i,j) = cv::Vec3b(0,0,0);
+                output.at<cv::Vec3b>(i,j) = cv::Vec3b(255,255,255);
             }
 
-            //std::cout<<"My Y: "<<ycbcr_value[0]<<std::endl;
-            float other = tmp[2] * 0.299 + tmp[1] * 0.587 * tmp[0] * 0.114;
-            //std::cout<<"Other Y: "<<other<<std::endl;
         }
-    }
-    */
+    }   
 }
 
+void blurMask(const cv::Mat &input, cv::Mat& mask, cv::Mat& output) {
+    cv::blur(input, output, cv::Size(7,7));
+    for (int i = 0; i < input.rows; i++) {
+        for (int j = 0; j < input.cols; j++) {
+            if (mask.at<cv::Vec3b>(i,j) != cv::Vec3b(255,255,255)) {
+                output.at<cv::Vec3b>(i,j) = input.at<cv::Vec3b>(i,j);
+            }
+        }
+    }
+}
+
+//Da finire
+void blurMaskborder(const cv::Mat &input, cv::Mat& mask, cv::Mat& output) {
+    cv::blur(input, output, cv::Size(7,7));
+    for (int i = 0; i < input.rows; i++) {
+        for (int j = 0; j < input.cols; j++) {
+            if (mask.at<cv::Vec3b>(i,j) != cv::Vec3b(255,255,255)) {
+                output.at<cv::Vec3b>(i,j) = input.at<cv::Vec3b>(i,j);
+            }
+        }
+    }
+}
+
+void checkImage(const cv::Mat& input, cv::Mat& mask) {
+}
 
