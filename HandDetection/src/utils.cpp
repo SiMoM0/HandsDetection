@@ -84,9 +84,17 @@ float IoU(const std::vector<cv::Rect>& prediction, const std::vector<cv::Rect>& 
     }
     //loop through all the bounding box
     for(int i=0; i<prediction.size(); ++i) {
+        //consider the max IoU for each rectangle in order to match them correctly
+        float max = 0;
         for(int j=0; j<ground_truth.size(); ++j) {
-            iou += IoU(prediction[i], ground_truth[j]);
+            float score = IoU(prediction[i], ground_truth[j]);
+            //update max
+            if(score > max) {
+                max = score;
+            }
         }
+        //add score found to iou
+        iou += max;
     }
     //get the maximum number of bounding box between the true and predicted
     int box_num = std::max(prediction.size(), ground_truth.size());
