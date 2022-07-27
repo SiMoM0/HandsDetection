@@ -12,16 +12,16 @@ int main() {
 	//DETECTOR CLASS TEST
 
 	//load images
-	vector<Mat> images = load_images("./Dataset/rgb");
-	//vector<Mat> images = load_images(DATASET_PATH);
+	//vector<Mat> images = load_images("./Dataset/rgb");
+	vector<Mat> images = load_images(DATASET_PATH);
 
 	Detector hd;
 	vector<Prediction> pred = hd.detect(images, true);
 
 	//load ground truth boudning box
 	vector<cv::String> fn;
-	glob("./Dataset/det", fn, true);
-	//glob(BBOX_PATH , fn, true);
+	//glob("./Dataset/det", fn, true);
+	glob(BBOX_PATH , fn, true);
 	
 	//test save_bbox function
 	//printf("Saving bounding box test\n");
