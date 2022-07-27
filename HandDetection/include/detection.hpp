@@ -105,10 +105,10 @@ class Detector {
         Detector();
 
         /**
-         * Create a Detector object and load images stored in the input path
-         * @param images_path directory path where images are stored
+         * Create Detector object with custom network
+         * @param net custom network for Detector object
          */
-        Detector(const std::string& images_path);
+        Detector(const cv::dnn::Net& net);
 
         /**
          * Destructor for Detector class
@@ -116,56 +116,31 @@ class Detector {
         ~Detector() {}
 
         /**
-         * Number of images contained
-         * @return integer number corresponding to the number of input images
-         */
-        int size() {return input_images.size();}
-
-        /**
-         * Load images from a given path
-         * @param images_path directory path where images are stored
-         */
-        void add_images(const std::string& images_path);
-
-        /**
-         * Load images from a vector of images
-         * @param images vector of images of type std::vector<cv::Mat>
-         */
-        void add_images(const std::vector<cv::Mat> images);
-
-        /**
-         * Load a single image from its path
-         * @param image_path path of the given image
-         */
-        void add_image(const std::string& image_path);
-
-        /**
-         * Load a single image
-         * @param image a cv::Mat object to load
-         */
-        void add_image(const cv::Mat& image);
-
-        /**
-         * Perform the detection on all the images loaded
-         * @return a vector of Prediction object type
-         */
-        std::vector<Prediction> detect();
-
-        /**
          * Perform bounding box detection on a single image
          * @param img input image
+         * @param verbose print information, default = false
          * @return Prediction object
          */
-        Prediction detect(const cv::Mat& img);
+        Prediction detect(const cv::Mat& img, const bool& verbose = false);
 
-        //TODO: add destructor, similar and other functions
+        /**
+         * Perform the detection on all the input images
+         * @param images vector of input images
+         * @param verbose print information, default = false
+         * @return a vector of Prediction object type
+         */
+        std::vector<Prediction> detect(const std::vector<cv::Mat>& images, const bool& verbose = false);
+
+        /**
+         * Load a single or a set of images from path and perform detection
+         * @param path path of image or directory of images
+         * @param dir true if specified directory, false if single image to be load
+         * @return vector of prediction for both option
+         */
+        std::vector<Prediction> detect(const std::string& path, const bool& dir, const bool& verbose = false);
 
     private:
         cv::dnn::Net network;
-        std::vector<cv::Mat> input_images;
-        std::vector<std::vector<cv::Mat>> net_outputs;
-        std::vector<std::vector<cv::Rect>> bounding_box;
-        std::vector<cv::Mat> output_images;
 
         /**
          * Perform forward pass on a single image and returns the output of the network
@@ -225,7 +200,5 @@ class Detector {
  * @param network network that perform the detection
  */
 //void detect(const cv::Mat& input_image, cv::Mat& output_image, cv::dnn::Net& network);
-
-//TODO: functions for list of images
 
 #endif //DETECTION_H

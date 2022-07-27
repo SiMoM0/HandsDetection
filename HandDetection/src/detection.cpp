@@ -12,30 +12,8 @@ Detector::Detector() {
     network = cv::dnn::readNet(NETWORK_PATH);
 }
 
-Detector::Detector(const std::string& images_path) {
-    network = cv::dnn::readNet(NETWORK_PATH);
-    input_images = load_images(images_path);
-}
-
-void Detector::add_images(const std::string& images_path) {
-    std::vector<cv::Mat> images = load_images(images_path);
-    for(int i=0; i<images.size(); ++i) {
-        input_images.push_back(images[i]);
-    }
-}
-
-void Detector::add_images(const std::vector<cv::Mat> images) {
-    for(int i=0; i<images.size(); ++i) {
-        input_images.push_back(images[i]);
-    }
-}
-
-void Detector::add_image(const std::string& image_path) {
-    input_images.push_back(load_image(image_path));
-}
-
-void Detector::add_image(const cv::Mat& image) {
-    input_images.push_back(image);
+Detector::Detector(const cv::dnn::Net& net) {
+    network = net;
 }
 
 std::vector<cv::Mat> Detector::forward_pass(const cv::Mat& img) {
@@ -63,7 +41,7 @@ std::vector<cv::Rect> Detector::convert_boxes(const cv::Mat& img, const std::vec
 
     //get detections data
     float* data = (float*) detections[0].data;
-    //TODO: delete
+    //TODO: comment
     float max = 0.0;
 
     //Iterate through the all the detections
@@ -95,8 +73,8 @@ std::vector<cv::Rect> Detector::convert_boxes(const cv::Mat& img, const std::vec
         //next detection
         data += 6;
     }
-    //TODO: delete
-    printf("Max confidence: %f\n", max);
+    //TODO: comment
+    //printf("Max confidence: %f\n", max);
 
     //apply non maximum suppresion to get only one bounding box
     std::vector<int> indices;
@@ -108,7 +86,7 @@ std::vector<cv::Rect> Detector::convert_boxes(const cv::Mat& img, const std::vec
     }
 
     //bounding box of current image
-    printf("Number of final bounding box: %d\n", best_bbox.size());
+    //printf("Number of final bounding box: %d\n", best_bbox.size());
     
     return best_bbox;
 }
@@ -129,40 +107,57 @@ cv::Mat Detector::generate_labels(const cv::Mat& img, const std::vector<cv::Rect
         //Create the two points for the rectangle
 		cv::Point p1 (x, y);
 		cv::Point p2 (x + width, y + height);
-		cv::rectangle(temp, p1, p2, RED, 3);
+		cv::rectangle(temp, p1, p2, COLORS[i], 2);
 	}
     return temp;
 }
 
-std::vector<Prediction> Detector::detect() {
-    //output vector of Prediction objects
-    std::vector<Prediction> pred;
-    for(int i=0; i<input_images.size(); ++i) {
-        cv::Mat img = input_images[i];
-        //call the three functions for the general prediction
-        std::vector<cv::Mat> output = forward_pass(img);
-        //Store output of the network
-        net_outputs.push_back(output);
-        std::vector<cv::Rect> bbox = convert_boxes(img, output);
-        //Store bounding box
-        bounding_box.push_back(bbox);
-        cv::Mat det_img = generate_labels(img, bbox);
-        //Store labeled image
-        output_images.push_back(det_img);
-
-        //store new prediction
-        pred.push_back(Prediction(input_images[i], bbox, det_img));
+Prediction Detector::detect(const cv::Mat& img, const bool& verbose) {
+    if(verbose) {
+        std::printf("PERFORMING DETECTION ON IMAGE\n");
     }
-
-    return pred;
-}
-
-Prediction Detector::detect(const cv::Mat& img) {
     std::vector<cv::Mat> output = forward_pass(img);
     std::vector<cv::Rect> bbox = convert_boxes(img, output);
     cv::Mat det_img = generate_labels(img, bbox);
 
     return Prediction(img, bbox, det_img);
+}
+
+std::vector<Prediction> Detector::detect(const std::vector<cv::Mat>& images, const bool& verbose) {
+    if(verbose) {
+        std::printf("PERFORMING DETECTION ON IMAGES\n");
+    }
+    //output vector of predictions
+    std::vector<Prediction> output;
+    for(int i=0; i<images.size(); ++i) {
+        //call single detect function
+        Prediction pred = detect(images[i]);
+        output.push_back(pred);
+    }
+
+    return output;
+}
+
+std::vector<Prediction> Detector::detect(const std::string& path, const bool& dir, const bool& verbose) {
+    //outpput vector of Prediction
+    std::vector<Prediction> output;
+    if(!dir) {
+        //load image
+        cv::Mat img = load_image(path);
+        //perform detection and add to vector
+        Prediction pred = detect(img, verbose);
+        output.push_back(pred);
+    } else {
+        //load images
+        std::vector<cv::Mat> images = load_images(path);
+        //detection and fill vector
+        std::vector<Prediction> pred = detect(images, verbose);
+        for(int i=0; i<pred.size(); ++i) {
+            output.push_back(pred[i]);
+        }
+    }
+
+    return output;
 }
 
 //Prediction class and functions definition
@@ -244,7 +239,6 @@ std::vector<cv::Rect> get_boxes(const cv::Mat& img, const std::vector<cv::Mat>& 
     //get detections data
     float* data = (float*) detections[0].data;
 
-    //TODO: delete
     float max = 0.0;
 
     //Iterate through the all the detections
@@ -276,7 +270,6 @@ std::vector<cv::Rect> get_boxes(const cv::Mat& img, const std::vector<cv::Mat>& 
         //next detection
         data += 6;
     }
-    //TODO: delete
     printf("Max confidence: %f\n", max);
 
     //apply non maximum suppresion to get only one bounding box

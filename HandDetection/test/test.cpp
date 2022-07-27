@@ -11,13 +11,17 @@ using namespace std;
 int main() {
 	//DETECTOR CLASS TEST
 
-	//Detector hd ("./Dataset/rgb/");
-	Detector hd (DATASET_PATH);
-	vector<Prediction> pred = hd.detect();
+	//load images
+	vector<Mat> images = load_images("./Dataset/rgb");
+	//vector<Mat> images = load_images(DATASET_PATH);
+
+	Detector hd;
+	vector<Prediction> pred = hd.detect(images, true);
 
 	//load ground truth boudning box
 	vector<cv::String> fn;
-	glob(BBOX_PATH , fn, true);
+	glob("./Dataset/det", fn, true);
+	//glob(BBOX_PATH , fn, true);
 	
 	//test save_bbox function
 	//printf("Saving bounding box test\n");
@@ -25,12 +29,14 @@ int main() {
 
 	//show all output images
 	for(int i=0; i<pred.size(); ++i) {
+		printf("IMAGE %d\n", i+1);
 		//load real boudning box
 		vector<Rect> ground_truth = load_bbox(fn[i]);
 		float iou = pred[i].evaluate(ground_truth);
-		printf("IoU value: %f\n", iou);
-		//show image with all boudning box
-		pred[i].show_results(ground_truth);
+		printf("Average IoU value: %f\n\n", iou);
+		vector<Rect> bbox = pred[i].get_bbox();
+		//show image with predicted boudning box
+		pred[i].show_results();
 	}
   
   //SEGMENTATION CLASS TEST
