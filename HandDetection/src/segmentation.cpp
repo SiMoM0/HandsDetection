@@ -1,3 +1,4 @@
+//Implementation of the header "segmentation.hpp"
 #include <opencv2/core.hpp>
 #include <iostream>
 #include <opencv2/imgproc.hpp>
@@ -59,7 +60,10 @@ void Segmenter::segment_regions() {
         */
 
         cv::Mat tmp;
+        //multicolorSegmentation(hand_regions[i],tmp);
+
         multicolorSegmentation(hand_regions[i],tmp);
+        //checkImage(hand_regions[i],tmp);
         hand_segmented.push_back(tmp);
     }
 }
@@ -72,7 +76,7 @@ void Segmenter::write_segmented() {
 
         for (int j = 0; j < tmp.rows; j++) {
             for (int z = 0; z < tmp.cols; z++) {
-                if (hand_segmented[i].at<cv::Vec3b>(j,z) != cv::Vec3b(0,0,0)) {
+                if (hand_segmented[i].at<uchar>(j,z) != 0) {
                     output_image.at<cv::Vec3b>(bounding_boxes[i].y + j,bounding_boxes[i].x + z) = COL[i];
 
                     masked_image.at<uchar>(bounding_boxes[i].y + j,bounding_boxes[i].x + z) = 255;
@@ -80,11 +84,13 @@ void Segmenter::write_segmented() {
             }
         }
     }
+    cv::imshow("output", output_image);
+    cv::waitKey(0);
     
 }
 
 float Segmenter::pixel_accuracy() {
-    int TH = 0, FH = 0, trash = 0;
+    int TH = 0, FH = 0;
     
     for (unsigned int i = 0; i < true_mask.rows; i++) {
         for (unsigned int j = 0; j < true_mask.cols; j++) {
@@ -96,14 +102,11 @@ float Segmenter::pixel_accuracy() {
             if (true_val == 0 && class_val == 0) {
                 FH++;
             }
-            if (true_val != class_val) {
-                trash++;
-            }
         }
     }
     float result = 0;
     result = (static_cast<float>(TH) + static_cast<float>(FH)) / static_cast<float>(true_mask.rows * true_mask.cols);
-    std::cout<<trash<<std::endl;
+    std::cout<<result<<std::endl;
     return result;
 }
 
@@ -161,8 +164,7 @@ void regionGrowing(const cv::Mat& input, cv::Mat& mask, const int ksize, uchar s
     //convert to grayscale, apply blur and threshold (inverse to obtain white for cracks)
     cv::Mat gray, img;
     cv::cvtColor(input, gray, cv::COLOR_BGR2GRAY);
-    cv::blur(gray, img, cv::Size(ksize, ksize));
-    cv::threshold(img, img, 50, 255, cv::THRESH_BINARY_INV);
+    multicolorSegmentation(input, img);
     //cv::imshow("Threshold", img);
 
     //loop threshold image to erode pixel groups in a single one (there may be better methods (?))
@@ -210,7 +212,6 @@ void regionGrowing(const cv::Mat& input, cv::Mat& mask, const int ksize, uchar s
             }
         }
     }
-    std::printf("Points: %d\n", p);
     while(!points.empty()) {
         //pop a single point
         std::pair<int, int> p = points.back();
@@ -559,7 +560,7 @@ void watershedSegmentation(const cv::Mat& input, cv::Mat& output) {
 void multicolorSegmentation(const cv::Mat& input, cv::Mat& output) {
     cv::Mat rgb, hsv, ycbcr;
     
-    output = input.clone();
+    output = cv::Mat(input.size(), CV_8UC1);
     for (int i = 0; i < output.rows; i++) {
         for (int j = 0; j < output.cols; j++) {
             cv::Vec3b tmp = input.at<cv::Vec3b>(i,j);
@@ -610,13 +611,16 @@ void multicolorSegmentation(const cv::Mat& input, cv::Mat& output) {
                 (S >= 0.2 && S <= 0.6) &&
                 (Cb > 77 && Cb < 127) &&
                 (Cr > 133 && Cr < 173)) {
-                    output.at<cv::Vec3b>(i,j) = cv::Vec3b(0,0,0);
+                    //output.at<cv::Vec3b>(i,j) = cv::Vec3b(0,0,0);
+                    output.at<uchar>(i,j) = 0;
             } else {
-                output.at<cv::Vec3b>(i,j) = cv::Vec3b(255,255,255);
+                //output.at<cv::Vec3b>(i,j) = cv::Vec3b(255,255,255);
+                output.at<uchar>(i,j) = 255;
             }
 
         }
-    }   
+    }
+    //checkImage(input,output);
 }
 
 void blurMask(const cv::Mat &input, cv::Mat& mask, cv::Mat& output) {
@@ -643,5 +647,55 @@ void blurMaskborder(const cv::Mat &input, cv::Mat& mask, cv::Mat& output) {
 }
 
 void checkImage(const cv::Mat& input, cv::Mat& mask) {
+    int black_value[] = {0,0,0};
+    int black_pixels = 0;
+    int white_value[] = {0,0,0};
+    int white_pixels = 0;
+    for (unsigned int i = 0; i < input.rows; i++) {
+        for (unsigned int j = 0; j < input.cols; j++) {
+            cv::Vec3b pixel = input.at<cv::Vec3b>(i,j);
+            if (mask.at<uchar>(i,j) == 0) {
+                black_value[0] += pixel[0];
+                black_value[1] += pixel[1];
+                black_value[2] += pixel[2];
+                black_pixels++;
+            } else {
+                white_value[0] += pixel[0];
+                white_value[1] += pixel[1];
+                white_value[2] += pixel[2];
+                white_pixels++;
+            }
+        }
+    }
+    float tmp;
+    for (unsigned int i = 0; i < 3; i++) {
+        if (black_pixels != 0) {
+            tmp = static_cast<float>(black_value[i] / black_pixels);
+            black_value[i] = static_cast<int>(tmp);
+        } else {
+            black_value[i] = 0;
+        }
+        if (white_value != 0) {
+            tmp = static_cast<float>(white_value[i] / white_pixels);
+            white_value[i] = static_cast<int>(tmp);
+        } else {
+            white_value[i] = 0;
+        }
+    }
+    std::cout<<"Ok"<<std::endl;
+
+    float mse_b = 0, mse_w = 0;
+    int skin_color[3] = {218, 231, 250};
+
+    for (unsigned int i = 0; i < 3; i++) {
+        mse_b += static_cast<float>(pow(black_value[i] - skin_color[i],2));
+        mse_w += static_cast<float>(pow(white_value[i] - skin_color[i],2));
+    }
+    std::cout<<"Ok"<<std::endl;
+
+    if (mse_b < mse_w) {
+        cv::bitwise_not(mask, mask);
+    }
+
 }
 
