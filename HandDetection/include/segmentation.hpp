@@ -1,4 +1,10 @@
-//Header file for the segmentation task
+/**
+ * @file segmentation.hpp
+ * 
+ * @brief Classes and functions for the hand segmentation
+ * 
+ * @author //TODO: Grotto Gionata, Mosco Simone, Pisacreta Giulia
+ */
 #ifndef SEGMENTATION_H
 #define SEGMENTATION_H
 
@@ -15,7 +21,7 @@ const cv::Vec3b GREEN_ (0, 255, 0);
 const cv::Vec3b YELLOW_ (0, 255, 255);
 const cv::Vec3b CYAN_ (255, 255, 0);
 const cv::Vec3b MAGENTA_ (255, 0, 255);
-//vector of colors
+//vector of colors to color the different hands
 const std::vector<cv::Vec3b> COL {RED_, GREEN_, BLUE_, YELLOW_, CYAN_, MAGENTA_};
 
 class Segmenter {
