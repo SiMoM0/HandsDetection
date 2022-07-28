@@ -22,10 +22,11 @@ void show_images(const std::vector<cv::Mat>& images, const std::string& window_n
 cv::Mat load_image(const std::string& path) {
     //try to read the image
     cv::Mat img = cv::imread(path);
-        if(img.empty())
+        if(img.empty()) {
             std::printf("Could not open images at %s", path);
             //throw exception
             throw std::invalid_argument("Problem loading image\n");
+        }
     return img;
 }
 
