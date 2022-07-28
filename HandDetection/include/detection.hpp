@@ -3,7 +3,7 @@
  * 
  * @brief Classes and functions for the hand detection
  * 
- * @author //TODO: ADD AUTHOR
+ * @author //TODO: Grotto Gionata, Mosco Simone, Pisacreta Giulia
  */
 
 #ifndef DETECTION_H
