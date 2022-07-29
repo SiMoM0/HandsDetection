@@ -60,6 +60,12 @@ class Segmenter {
          */
         void printResults(const int& counter);
 
+        /**
+         * Get the output image with segmented regions
+         * @return cv::Mat output image with colored regions
+         */
+        cv::Mat get_output() {return output_image;}
+
 
 
 
