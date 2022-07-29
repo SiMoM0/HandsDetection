@@ -49,7 +49,7 @@ class Prediction {
          * Get the output image with bouding box
          * @return cv::Mat output image with bounding box drawn
          */
-        std::vector<cv::Mat> get_output() {return output_image;}
+        cv::Mat get_output() {return output_image;}
 
         /**
          * Indicates if the prediction contain some hands
