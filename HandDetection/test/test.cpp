@@ -35,6 +35,10 @@ int main() {
 		std::vector<cv::Rect> bbox = pred[i].get_bbox();
 		//show image with predicted boudning box
 		pred[i].show_results();
+		std::string filenametxt = RESULTSTXT + std::to_string(i + 1) + ".txt";
+		save_bbox(bbox, filenametxt);
+		std::string filenamedet = RESULTSDET + std::to_string(i + 1) + ".jpg";
+		cv::imwrite(filenamedet, pred[i].get_output());
 	}
   
   //SEGMENTATION CLASS TEST
@@ -42,10 +46,12 @@ int main() {
 
   
 	for (int i = 0; i < pred.size(); i++) {
-		Segmenter p(pred[i], fn[i]);
-		p.segmentRegions();
-		p.writeSegmented();
-		p.printResults(i);
+		Segmenter seg(pred[i], fn[i]);
+		seg.segment_regions();
+		seg.write_segmented();
+		seg.print_results(i);
+		std::string filenameseg = RESULTSSEG+ std::to_string(i + 1) + ".jpg";
+		cv::imwrite(filenameseg, seg.get_output());
 	}
 
     return 0;
