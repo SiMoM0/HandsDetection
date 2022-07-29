@@ -54,7 +54,7 @@ class Segmenter {
          */
         float pixelAccuracy();
 
-        /*
+        /**
          * Print the pixel accuracy of the segmentation and the final segmented image
          * @param counter inxed of the image segmented
          */
