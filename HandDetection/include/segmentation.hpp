@@ -42,17 +42,23 @@ class Segmenter {
         /**
          * Apply the segmentation method on the regions and save them in a vector
          */
-        void segment_regions();
+        void segmentRegions();
         
         /**
          * Rewrite the segmented image in the output image and print it
          */
-        void write_segmented();
+        void writeSegmented();
 
         /**
          * Return rate of segmentation
          */
-        float pixel_accuracy();
+        float pixelAccuracy();
+
+        /*
+         * Print the pixel accuracy of the segmentation and the final segmented image
+         * @param counter inxed of the image segmented
+         */
+        void printResults(const int& counter);
 
 
 
@@ -72,7 +78,7 @@ class Segmenter {
         /**
          * Get all the boxes in the image that contains a hand
          */
-        void get_box_region();
+        void getBoxRegion();
 };
 
 void otsuSegmentation(const cv::Mat& input, cv::Mat& output, const int ksize);

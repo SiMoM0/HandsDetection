@@ -11,11 +11,11 @@ Segmenter::Segmenter(Prediction& predicted_image, std::string path_mask) {
     masked_image = cv::Mat::zeros(predicted_image.get_input().size(), CV_8U);
     output_image = predicted_image.get_input().clone();
     bounding_boxes = predicted_image.get_bbox();
-    get_box_region();
+    getBoxRegion();
     true_mask = cv::imread(path_mask, CV_8UC1);
 }
 
-void Segmenter::segment_regions() {
+void Segmenter::segmentRegions() {
     for (int i = 0; i < hand_regions.size(); i++) {
         /*
         cv::Mat hsv;
@@ -58,17 +58,25 @@ void Segmenter::segment_regions() {
         hand_segmented.push_back(tmp);
 
         */
-
+    
         cv::Mat tmp;
-        //multicolorSegmentation(hand_regions[i],tmp);
-
         multicolorSegmentation(hand_regions[i],tmp);
         //checkImage(hand_regions[i],tmp);
         hand_segmented.push_back(tmp);
+        
+
+    /*
+       cv::Mat otsu, toret;
+       otsuSegmentation(hand_regions[i],otsu, 5);
+       kmeansSegmentation(otsu, toret, 2);
+       cv::imshow("ret", toret);
+       cv::waitKey(0);
+       hand_segmented.push_back(toret);
+*/
     }
 }
 
-void Segmenter::write_segmented() {
+void Segmenter::writeSegmented() {
     masked_image = cv::Mat::zeros(output_image.size(), CV_8UC1);
     for (int i = 0; i < hand_segmented.size(); i++) {
 
@@ -84,12 +92,10 @@ void Segmenter::write_segmented() {
             }
         }
     }
-    cv::imshow("output", output_image);
-    cv::waitKey(0);
     
 }
 
-float Segmenter::pixel_accuracy() {
+float Segmenter::pixelAccuracy() {
     int TH = 0, FH = 0;
     
     for (unsigned int i = 0; i < true_mask.rows; i++) {
@@ -106,12 +112,25 @@ float Segmenter::pixel_accuracy() {
     }
     float result = 0;
     result = (static_cast<float>(TH) + static_cast<float>(FH)) / static_cast<float>(true_mask.rows * true_mask.cols);
-    std::cout<<result<<std::endl;
     return result;
 }
 
+void Segmenter::printResults(const int& counter) {
+    if (counter == 0) {
+        std::cout<<"PERFORMING SEGMENTATION ON IMAGE"<<std::endl;
+    }
+    std::cout<<"IMAGE "<<counter+1<<std::endl;
+    std::cout<<"Pixel accuracy value: "<<pixelAccuracy()<<std::endl;
+    std::string title = "Segmented image " + std::to_string(counter+1);
+    cv::namedWindow(title);
+    cv::imshow(title, output_image);
+    cv::waitKey(0);
+    cv::destroyAllWindows();
+    std::cout<<std::endl;
+}
 
-void Segmenter::get_box_region() {
+
+void Segmenter::getBoxRegion() {
     for (unsigned int i = 0; i < bounding_boxes.size(); i++) {
         if (bounding_boxes[i].x + bounding_boxes[i].width > output_image.cols) {
             bounding_boxes[i].width = output_image.cols - bounding_boxes[i].x;
