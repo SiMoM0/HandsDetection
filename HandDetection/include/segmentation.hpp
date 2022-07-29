@@ -42,23 +42,23 @@ class Segmenter {
         /**
          * Apply the segmentation method on the regions and save them in a vector
          */
-        void segmentRegions();
+        void segment_regions();
         
         /**
          * Rewrite the segmented image in the output image and print it
          */
-        void writeSegmented();
+        void write_segmented();
 
         /**
          * Return rate of segmentation
          */
-        float pixelAccuracy();
+        float pixel_accuracy();
 
         /**
          * Print the pixel accuracy of the segmentation and the final segmented image
          * @param counter inxed of the image segmented
          */
-        void printResults(const int& counter);
+        void print_results(const int& counter);
 
         /**
          * Get the output image with segmented regions
@@ -84,37 +84,111 @@ class Segmenter {
         /**
          * Get all the boxes in the image that contains a hand
          */
-        void getBoxRegion();
+        void get_box_region();
 };
 
-void otsuSegmentation(const cv::Mat& input, cv::Mat& output, const int ksize);
+/**
+ * Function that performs the segmentation using the HSV color space (Hue, 
+ * Saturation, Value). Check the element in range of the Hue value.
+ * 
+ * @param input input image
+ * @param output segmented image
+ */
+void hsv_segmentation(const cv::Mat& input, cv::Mat& output);
 
-void kmeansSegmentation(const cv::Mat& input, cv::Mat& output, const int k, const bool color=false);
+/**
+ * Function that performs the segmentation using the Region Growing technique.
+ * It uses the result of the multicolor_segmentation to find the mask to erode and
+ * start the algorithm
+ * 
+ * @param input input image
+ * @param mask mask region
+ * @param similarity distance criteria between neighbour points, uchar value
+ */
+void region_growing(const cv::Mat& input, cv::Mat& mask, uchar similarity);
 
-void regionGrowing(const cv::Mat& input, cv::Mat& mask, const int ksize, uchar similarity);
+/**
+ * Function that performs the segmentation using the YCbCr color space
+ * 
+ * @param input input image
+ * @param output segmented image
+ */
+void ycbcr_segmentation(const cv::Mat& input, cv::Mat& output);
 
-void hsvSegmentation(const cv::Mat& input, cv::Mat& output);
+/**
+ * Function that performs the segmentation using the BGR color space
+ * 
+ * @param input input image
+ * @param output segmented image
+ */
+void bgr_segmentation(const cv::Mat& input, cv::Mat& output);
 
-void Dilation(const cv::Mat& src, const cv::Mat& dst, int dilation_elem, int dilation_size);
+/**
+ * Function that performs the segmentation using the Otsu method 
+ * 
+ * @param input input image
+ * @param output output image
+ * @param ksize blur size
+ */
+void otsu_segmentation(const cv::Mat& input, cv::Mat& output, const int ksize);
 
-void ycbSegmentation(const cv::Mat& input, cv::Mat& output);
+/**
+ * Function that performs the segmentation using a clustering technique: K-means
+ * 
+ * @param input input image
+ * @param output segmented image
+ * @param k number of clusters
+ * @param color set true if input image is colorful
+ */
+void kmeans_segmentation(const cv::Mat& input, cv::Mat& output, const int k, const bool color=false);
 
-void bgrSegmentation(const cv::Mat& input, cv::Mat& output);
+/**
+ * Function that performs the segmentation using the HSL (Hue, Saturation, Lightness) color space
+ * 
+ * @param input input image
+ * @param output segmented image
+ */
+void hsl_segmentation(const cv::Mat& input, cv::Mat& output);
 
-void hslSegmentation(const cv::Mat& input, cv::Mat& output);
+/**
+ * Function that finds edges in the image 
+ * 
+ * @param input input image
+ * @param output output image
+ * @param sz blur size
+ * @param kernel_size canny kernel size
+ */
+void canny_edge(const cv::Mat& input, cv::Mat& output, int sz, int kernel_size);
 
-void htsSegmentation(const cv::Mat& input, cv::Mat& output);
+void watershed_segmentation(const cv::Mat& input, cv::Mat& output);
 
-void cannyEdge(const cv::Mat& input, cv::Mat& output, int sz, int kernel_size);
+/**
+ * Use RGB, HSV and YCbCr color spaces threshold to find the hand color and
+ * intensity in the image
+ * 
+ * @param input input image
+ * @param output segmented image
+ */
+void multicolor_segmentation(const cv::Mat& input, cv::Mat& output);
 
-void watershedSegmentation(const cv::Mat& input, cv::Mat& output);
 
-void multicolorSegmentation(const cv::Mat& input, cv::Mat& output);
+/**
+ * Blur only the element that are inside the white region in the mask
+ * 
+ * @param input input image
+ * @param mask mask of the input image
+ * @param output resulted blurred image
+ */
+void blur_mask(const cv::Mat& input, cv::Mat& mask, cv::Mat& output);
 
-void blurMask(const cv::Mat& input, cv::Mat& mask, cv::Mat& output);
-
-void blurMaskborder(const cv::Mat& input, cv::Mat& mask, cv::Mat& output);
-
-void checkImage(const cv::Mat& input, cv::Mat& mask);
+/**
+ * Analize the mean of the two region segmented by the mask and
+ * compute the mean square error respect to the skin color palette. If the black 
+ * region has lower mean square error then invert the mask
+ * 
+ * @param input input image
+ * @param mask mask of the input image
+ */
+void check_image(const cv::Mat& input, cv::Mat& mask);
 
 #endif //SEGMENTATION_H
