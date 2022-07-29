@@ -182,13 +182,11 @@ void multicolor_segmentation(const cv::Mat& input, cv::Mat& output);
 void blur_mask(const cv::Mat& input, cv::Mat& mask, cv::Mat& output);
 
 /**
- * Analize the mean of the two region segmented by the mask and
- * compute the mean square error respect to the skin color palette. If the black 
- * region has lower mean square error then invert the mask
+ * Return the normalized number of white pixel in the mask
  * 
- * @param input input image
- * @param mask mask of the input image
+ * @param mask input mask
+ * @return float normalized value of white pixels
  */
-void check_image(const cv::Mat& input, cv::Mat& mask);
+float check_mask(const cv::Mat& mask);
 
 #endif //SEGMENTATION_H

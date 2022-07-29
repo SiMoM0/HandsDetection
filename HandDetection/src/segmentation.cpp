@@ -1,3 +1,4 @@
+
 //Implementation of the header "segmentation.hpp"
 #include <opencv2/core.hpp>
 #include <iostream>
@@ -16,64 +17,35 @@ Segmenter::Segmenter(Prediction& predicted_image, std::string path_mask) {
 }
 
 void Segmenter::segment_regions() {
-    for (int i = 0; i < hand_regions.size(); i++) {
-        /*
-        cv::Mat hsv;
-        cv::Mat tmp(hand_regions[i].rows, hand_regions[i].cols, CV_8UC3);
-        cv::cvtColor(hand_regions[i], hsv, cv::COLOR_BGR2HSV);
-        cv::Mat hsv_split[3];
-        cv::split(hsv, hsv_split);
-        otsuSegmentation(hsv_split[2], tmp, 7);
-        hand_segmented.push_back(tmp);
-        */
-        /*
-        cv::Mat tmp;
-        hsvSegmentation(hand_regions[i],tmp);
-        hand_segmented.push_back(tmp);
-        */
-        /*
-        cv::Mat tmp, blur;
-        cv::namedWindow("tmp");
+    // if the image is too small the kmeans has better performance
+    bool flag = output_image.cols < 400 && output_image.rows < 400;
+
+    for (int i = 0; i < hand_regions.size(); i++) { 
+        cv::Mat tmp = hand_regions[i].clone(); 
+        cv::Mat otsu (hand_regions[i].rows, hand_regions[i].cols, CV_8UC3), kmeans, multi, blur;  
         
-        multicolorSegmentation(hand_regions[i],tmp);
-        blurMask(hand_regions[i], tmp, blur);
-        otsuSegmentation(blur,tmp, 5);
+        // apply otsu to the image
+        otsu_segmentation(tmp, otsu, 5);
+        // blur the selected portion of the image
+        blur_mask(tmp, otsu, blur); 
+        // apply kmeans
+        kmeans_segmentation(blur, kmeans, 2, false);
 
-        cv::Mat sharp;
-        double sigma = 1, threshold = 7, amount = 4;
-        cv::Mat low_contr = abs(hand_regions[i] - blur) < threshold;
-        sharp = hand_regions[i] * (1 + amount) + blur * (-amount);
-        cv::imshow("sharp",sharp);
-        otsuSegmentation(sharp,tmp,5);
+        // compute the multicolor segmentation
+        multicolor_segmentation(hand_regions[i],multi);
 
-        int dilation_size = 2;
-        cv::Mat dilat, eroded;
-        cv::Mat element = cv::getStructuringElement( cv::MORPH_ELLIPSE,
-                    cv::Size( 2*dilation_size + 1, 2*dilation_size+1 ),
-                    cv::Point( dilation_size, dilation_size ) );
-        cv::erode(tmp, tmp, element);
-        //cv::dilate(eroded, tmp, element);
-        
+        // check if the multicolor segmentation has selected too many pixels
+        bool mask_value = check_mask(multi) > 0.9;
 
-        hand_segmented.push_back(tmp);
-
-        */
-    
-        cv::Mat tmp;
-        multicolor_segmentation(hand_regions[i],tmp);
-        //checkImage(hand_regions[i],tmp);
-        hand_segmented.push_back(tmp);
-        
-
-    /*
-       cv::Mat otsu, toret;
-       otsuSegmentation(hand_regions[i],otsu, 5);
-       kmeansSegmentation(otsu, toret, 2);
-       cv::imshow("ret", toret);
-       cv::waitKey(0);
-       hand_segmented.push_back(toret);
-*/
-    }
+        // if the image is too small and the multicolor method doesn't have
+        // good performance then select the kmeans value, else select the 
+        // multicolor
+        if (flag || mask_value) {
+            hand_segmented.push_back(kmeans);
+        } else {
+            hand_segmented.push_back(multi);
+        }
+    } 
 }
 
 void Segmenter::write_segmented() {
@@ -336,7 +308,6 @@ void otsu_segmentation(const cv::Mat& input, cv::Mat& output, const int ksize) {
     cv::blur(input, temp, cv::Size(ksize, ksize));
     //Otsu optimal threshold to output image
     double value = cv::threshold(gray, mask, 100, 230, cv::THRESH_BINARY | cv::THRESH_OTSU);
-    std::printf("Otsu threshold: %f\n", value);
 
     //---segment input image with the original colors---
     //since there are only two segment, store two values
@@ -398,7 +369,6 @@ void kmeans_segmentation(const cv::Mat& input, cv::Mat& output, const int k, con
     std::vector<int> labels;
     cv::Mat1f centers;
     double compactness = cv::kmeans(data, k, labels, cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 10, 0.1), 10, cv::KMEANS_PP_CENTERS, centers);
-    std::printf("Compactness: %f\n", compactness);
 
     //update data array with clusters colors
     for(int i=0; i<data.rows; ++i) {
@@ -425,6 +395,11 @@ void kmeans_segmentation(const cv::Mat& input, cv::Mat& output, const int k, con
         //clone to output image
         output = tmp.clone();
     }
+    cv::cvtColor(output,output, cv::COLOR_BGR2GRAY);
+    cv::threshold(output, output, 100, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+    cv::Mat spl[3];
+    cv::split(output,spl);
+    output = spl[0].clone();
 }
 
 void hsl_segmentation(const cv::Mat& input, cv::Mat& output) {
@@ -612,65 +587,19 @@ void blur_mask(const cv::Mat &input, cv::Mat& mask, cv::Mat& output) {
     }
 }
 
-void check_image(const cv::Mat& input, cv::Mat& mask) {
-    // mean of black region in the mask
-    int black_value[] = {0,0,0};
-    // black pixel counter
-    int black_pixels = 0;
-    // mean of black region in the mask
-    int white_value[] = {0,0,0};
-    // black pixel counter
-    int white_pixels = 0;
-
-    // update mean and counter for each pixel
-    for (unsigned int i = 0; i < input.rows; i++) {
-        for (unsigned int j = 0; j < input.cols; j++) {
-            cv::Vec3b pixel = input.at<cv::Vec3b>(i,j);
-            if (mask.at<uchar>(i,j) == 0) {
-                black_value[0] += pixel[0];
-                black_value[1] += pixel[1];
-                black_value[2] += pixel[2];
-                black_pixels++;
-            } else {
-                white_value[0] += pixel[0];
-                white_value[1] += pixel[1];
-                white_value[2] += pixel[2];
-                white_pixels++;
+float check_mask(const cv::Mat& mask) {
+    // count all the selected pixel in the mask
+    int counter = 0;
+    for (unsigned int i = 0; i < mask.rows; i++) {
+        for (unsigned int j = 0; j < mask.cols; j++) {
+            if (mask.at<cv::Vec3b>(i,j) == cv::Vec3b(255,255,255)) {
+                counter++;
             }
         }
     }
 
-    // normalize each value
-    float tmp;
-    for (unsigned int i = 0; i < 3; i++) {
-        if (black_pixels != 0) {
-            tmp = static_cast<float>(black_value[i] / black_pixels);
-            black_value[i] = static_cast<int>(tmp);
-        } else {
-            black_value[i] = 0;
-        }
-        if (white_value != 0) {
-            tmp = static_cast<float>(white_value[i] / white_pixels);
-            white_value[i] = static_cast<int>(tmp);
-        } else {
-            white_value[i] = 0;
-        }
-    }
-    // mean square error values
-    float mse_b = 0, mse_w = 0;
-    // skin color values
-    int skin_color[3] = {218, 231, 250};
-
-    // compute the mean square error of the two regions
-    for (unsigned int i = 0; i < 3; i++) {
-        mse_b += static_cast<float>(pow(black_value[i] - skin_color[i],2));
-        mse_w += static_cast<float>(pow(white_value[i] - skin_color[i],2));
-    }
-
-    // if the mean square error of the black region is smaller then invert the mask
-    if (mse_b < mse_w) {
-        cv::bitwise_not(mask, mask);
-    }
-
+    // return the normalized value
+    return counter / static_cast<float>(mask.rows*mask.cols);
 }
+
 
